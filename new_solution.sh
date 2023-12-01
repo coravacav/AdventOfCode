@@ -10,8 +10,8 @@ fi
 
 mkdir -p $solution_name/$template
 
-cp -r $template-template/* $solution_name/$template
-cp -t $solution_name/$template template-files/*
+cp -r $template-template/. $solution_name/$template
+cp -r template-files/. $solution_name/$template
 
 if [ "$template" == "rust" ]; then
     sed -i "s/rust/$solution_name/g" $solution_name/$template/Cargo.toml
