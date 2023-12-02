@@ -2,9 +2,9 @@ fn main() {
     let input = include_str!("../input.txt");
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
-    println!("part_2: {}", part_2(input));
+    println!("part_2: {}", speedy_part_2(input));
 
-    assert_eq!(part2(input), part_2(input));
+    assert_eq!(part2(input), speedy_part_2(input));
 
     let now = std::time::Instant::now();
     for _ in 0..100000 {
@@ -20,7 +20,7 @@ fn main() {
 
     let now = std::time::Instant::now();
     for _ in 0..100000 {
-        part_2(input);
+        speedy_part_2(input);
     }
     println!("part_2: {:?}", now.elapsed() / 100000);
 }
@@ -90,50 +90,39 @@ fn part2(input: &str) -> usize {
 
 // Thanks to @RANKSHANK from Prime's discord for giving basis.
 // It's heavily edited, so I can't give full credit.
-fn part_2(input: &str) -> usize {
+fn speedy_part_2(input: &str) -> usize {
     let mut success: usize = 0;
+    let (mut val, mut r, mut g, mut b) = (0usize, 0usize, 0usize, 0usize);
 
-    let mut iter = input.as_bytes().iter();
-
-    while let Some(_) = iter.next() {
-        let mut val: usize = 0;
-        let mut r: usize = 0;
-        let mut g: usize = 0;
-        let mut b: usize = 0;
-
-        while !matches!(iter.next(), Some(b':')) {}
-
-        for c in iter.by_ref() {
-            match c {
-                b'0'..=b'9' => {
-                    val = val * 10 + (c - b'0') as usize;
-                }
-                b'r' => {
-                    r = r.max(val);
-                    val = 0;
-                }
-                b'g' => {
-                    g = g.max(val);
-                    val = 0;
-                }
-                b'b' => {
-                    b = b.max(val);
-                    val = 0;
-                }
-                b'\n' | b'\0' => {
-                    break;
-                }
-                b',' | b';' => {
-                    val = 0;
-                }
-                _ => {}
+    for c in input.as_bytes() {
+        match c {
+            b'0'..=b'9' => {
+                val = val * 10 + (c - b'0') as usize;
             }
+            b'r' => {
+                r = r.max(val);
+                val = 0;
+            }
+            b'g' => {
+                g = g.max(val);
+                val = 0;
+            }
+            b'b' => {
+                b = b.max(val);
+                val = 0;
+            }
+            b'\n' | b'\0' | b':' => {
+                success += r * g * b;
+                (val, r, g, b) = (0, 0, 0, 0);
+            }
+            b',' | b';' => {
+                val = 0;
+            }
+            _ => {}
         }
-
-        success += r * g * b;
     }
 
-    success
+    success + r * g * b
 }
 
 #[test]
