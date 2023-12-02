@@ -2,6 +2,7 @@ fn main() {
     let input = include_str!("../input.txt");
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
+    println!("part_2: {}", part_2(input));
 
     assert_eq!(part2(input), part_2(input));
 
@@ -87,41 +88,42 @@ fn part2(input: &str) -> usize {
         .sum()
 }
 
-// Thanks to @RANKSHANK from Prime's discord for giving basis. It's heavily edited, but nonetheless
+// Thanks to @RANKSHANK from Prime's discord for giving basis.
+// It's heavily edited, so I can't give full credit.
 fn part_2(input: &str) -> usize {
-    let mut success = 0;
+    let mut success: usize = 0;
 
-    for line in input.lines() {
-        let mut val = 0;
-        let mut r = 0;
-        let mut g = 0;
-        let mut b = 0;
-        let mut iter = line.chars();
+    let mut iter = input.as_bytes().iter();
 
-        loop {
-            if let Some(':') = iter.next() {
-                break;
-            }
-        }
+    while let Some(_) = iter.next() {
+        let mut val: usize = 0;
+        let mut r: usize = 0;
+        let mut g: usize = 0;
+        let mut b: usize = 0;
 
-        for c in iter {
+        while !matches!(iter.next(), Some(b':')) {}
+
+        for c in iter.by_ref() {
             match c {
-                '0'..='9' => {
-                    val = val * 10 + c.to_digit(10).unwrap();
+                b'0'..=b'9' => {
+                    val = val * 10 + (c - b'0') as usize;
                 }
-                'r' => {
+                b'r' => {
                     r = r.max(val);
                     val = 0;
                 }
-                'g' => {
+                b'g' => {
                     g = g.max(val);
                     val = 0;
                 }
-                'b' => {
+                b'b' => {
                     b = b.max(val);
                     val = 0;
                 }
-                ',' | ';' => {
+                b'\n' | b'\0' => {
+                    break;
+                }
+                b',' | b';' => {
                     val = 0;
                 }
                 _ => {}
@@ -131,7 +133,7 @@ fn part_2(input: &str) -> usize {
         success += r * g * b;
     }
 
-    success as usize
+    success
 }
 
 #[test]
