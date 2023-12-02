@@ -3,53 +3,25 @@ fn main() {
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
 
-    let correct_answer = part2(input);
+    assert_eq!(part2(input), part_2(input));
 
     let now = std::time::Instant::now();
     for _ in 0..100000 {
-        assert_eq!(correct_answer, part2(input));
+        part1(input);
     }
-    println!("stefa: {:?}", now.elapsed() / 100000);
+    println!("part1: {:?}", now.elapsed() / 100000);
 
     let now = std::time::Instant::now();
     for _ in 0..100000 {
-        assert_eq!(correct_answer, part_two(input));
+        part2(input);
     }
-    println!("chase: {:?}", now.elapsed() / 100000);
-}
+    println!("part2: {:?}", now.elapsed() / 100000);
 
-fn is_possible(input: &str) -> (usize, usize, usize, bool) {
-    let mut max_seen_red = 1;
-    let mut max_seen_green = 1;
-    let mut max_seen_blue = 1;
-
-    let possible = input
-        .split(", ")
-        .map(|item| item.split_once(" ").unwrap())
-        .map(|(count, color)| (count.parse::<usize>().unwrap(), color))
-        .map(|(count, color)| match color {
-            "red" => {
-                max_seen_red = max_seen_red.max(count);
-                count <= MAX_RED
-            }
-            "green" => {
-                max_seen_green = max_seen_green.max(count);
-                count <= MAX_GREEN
-            }
-            "blue" => {
-                max_seen_blue = max_seen_blue.max(count);
-                count <= MAX_BLUE
-            }
-            _ => unreachable!(),
-        })
-        .collect::<Vec<_>>();
-
-    (
-        max_seen_red,
-        max_seen_green,
-        max_seen_blue,
-        possible.into_iter().all(|x| x),
-    )
+    let now = std::time::Instant::now();
+    for _ in 0..100000 {
+        part_2(input);
+    }
+    println!("part_2: {:?}", now.elapsed() / 100000);
 }
 
 const MAX_RED: usize = 12;
@@ -63,8 +35,20 @@ fn part1(input: &str) -> usize {
         .filter(|(_, second_half)| {
             second_half
                 .split("; ")
-                .map(|input| (is_possible(input)))
-                .all(|(_, _, _, possible)| possible)
+                .map(|input| {
+                    input
+                        .split(", ")
+                        .map(|item| item.split_once(" ").unwrap())
+                        .map(|(count, color)| (count.parse::<usize>().unwrap(), color))
+                        .map(|(count, color)| match color {
+                            "red" => count <= MAX_RED,
+                            "green" => count <= MAX_GREEN,
+                            "blue" => count <= MAX_BLUE,
+                            _ => unreachable!(),
+                        })
+                        .all(|x| x)
+                })
+                .all(|possible| possible)
         })
         .map(|(first_half, _)| {
             first_half
@@ -84,73 +68,91 @@ fn part2(input: &str) -> usize {
         .map(|(_, second_half)| {
             second_half
                 .split("; ")
-                .map(|input| is_possible(input))
-                .fold((1, 1, 1), |acc, (red, green, blue, _)| {
-                    (acc.0.max(red), acc.1.max(green), acc.2.max(blue))
+                .map(|input| {
+                    input
+                        .split(", ")
+                        .map(|item| item.split_once(" ").unwrap())
+                        .map(|(count, color)| (count.parse::<usize>().unwrap(), color))
+                        .map(|(count, color)| match color {
+                            "red" => (count, 1, 1),
+                            "green" => (1, count, 1),
+                            "blue" => (1, 1, count),
+                            _ => unreachable!(),
+                        })
+                        .fold((1, 1, 1), |a, b| (a.0.max(b.0), a.1.max(b.1), a.2.max(b.2)))
                 })
+                .fold((1, 1, 1), |a, b| (a.0.max(b.0), a.1.max(b.1), a.2.max(b.2)))
         })
         .map(|(max_red, max_green, max_blue)| max_red * max_green * max_blue)
         .sum()
 }
 
-fn part_two(puzzle_input: &str) -> usize {
-    let x: Vec<_> = puzzle_input
-        .lines()
-        .map(|line| {
-            let (game_id, rules) = line.split_once(':').unwrap();
-            let (_, y) = game_id.split_once(' ').unwrap();
-            let game_id_num: usize = y.parse().unwrap();
-            let rules_list: Vec<_> = rules
-                .split(';')
-                .map(|round| {
-                    round
-                        .trim()
-                        .split(',')
-                        .map(|thing| {
-                            let (x, y) = thing.trim().split_once(' ').unwrap();
-                            let num: usize = x.parse().unwrap();
-                            (num, y)
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .collect();
+enum Mode {
+    GAME,
+    COLOR,
+}
 
-            (game_id_num, rules_list)
-        })
-        .collect();
-
-    let mut sum = 0;
-    for (_, rounds) in &x {
-        let mut min_reds = 0;
-        let mut min_greens = 0;
-        let mut min_blues = 0;
-
-        for round in rounds {
-            let mut red_count = 0;
-            let mut green_count = 0;
-            let mut blue_count = 0;
-
-            for (num, pull_color) in round {
-                match *pull_color {
-                    "red" => red_count += num,
-                    "green" => green_count += num,
-                    "blue" => blue_count += num,
-                    _ => {
-                        panic!("invalid color {}", pull_color);
-                    }
+fn part_2(input: &str) -> usize {
+    let zero: usize = '0' as usize;
+    let mut val: usize = 0;
+    let mut success: usize = 0;
+    let mut r: usize = 0;
+    let mut g: usize = 0;
+    let mut b: usize = 0;
+    for line in input.lines() {
+        let mut mode: Mode = Mode::GAME;
+        for c in line.chars() {
+            match c {
+                '0'..='9' => {
+                    val = val * 10 + (c as usize) - zero;
+                    continue;
                 }
+                _ => {}
             }
 
-            min_reds = min_reds.max(red_count);
-            min_greens = min_greens.max(green_count);
-            min_blues = min_blues.max(blue_count);
+            match mode {
+                Mode::GAME => match c {
+                    ':' => {
+                        mode = Mode::COLOR;
+                        r = 0;
+                        g = 0;
+                        b = 0;
+                        val = 0;
+                    }
+                    _ => {}
+                },
+                Mode::COLOR => match c {
+                    'r' => {
+                        r = r.max(val);
+                        val = 0;
+                    }
+                    'g' => {
+                        g = g.max(val);
+                        val = 0;
+                    }
+                    'b' => {
+                        b = b.max(val);
+                        val = 0;
+                    }
+                    '\0' => {
+                        success += r * g * b;
+                        break;
+                    }
+                    ',' => {
+                        val = 0;
+                    }
+                    ';' => {
+                        val = 0;
+                    }
+                    _ => {}
+                },
+            }
         }
 
-        let power = min_reds * min_greens * min_blues;
-        sum += power;
+        success += r * g * b;
     }
 
-    sum
+    success
 }
 
 #[test]
