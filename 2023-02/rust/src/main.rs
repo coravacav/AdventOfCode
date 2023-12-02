@@ -87,72 +87,51 @@ fn part2(input: &str) -> usize {
         .sum()
 }
 
-enum Mode {
-    GAME,
-    COLOR,
-}
-
+// Thanks to @RANKSHANK from Prime's discord for giving basis. It's heavily edited, but nonetheless
 fn part_2(input: &str) -> usize {
-    let zero: usize = '0' as usize;
-    let mut val: usize = 0;
-    let mut success: usize = 0;
-    let mut r: usize = 0;
-    let mut g: usize = 0;
-    let mut b: usize = 0;
+    let mut success = 0;
+
     for line in input.lines() {
-        let mut mode: Mode = Mode::GAME;
-        for c in line.chars() {
+        let mut val = 0;
+        let mut r = 0;
+        let mut g = 0;
+        let mut b = 0;
+        let mut iter = line.chars();
+
+        loop {
+            if let Some(':') = iter.next() {
+                break;
+            }
+        }
+
+        for c in iter {
             match c {
                 '0'..='9' => {
-                    val = val * 10 + (c as usize) - zero;
-                    continue;
+                    val = val * 10 + c.to_digit(10).unwrap();
+                }
+                'r' => {
+                    r = r.max(val);
+                    val = 0;
+                }
+                'g' => {
+                    g = g.max(val);
+                    val = 0;
+                }
+                'b' => {
+                    b = b.max(val);
+                    val = 0;
+                }
+                ',' | ';' => {
+                    val = 0;
                 }
                 _ => {}
-            }
-
-            match mode {
-                Mode::GAME => match c {
-                    ':' => {
-                        mode = Mode::COLOR;
-                        r = 0;
-                        g = 0;
-                        b = 0;
-                        val = 0;
-                    }
-                    _ => {}
-                },
-                Mode::COLOR => match c {
-                    'r' => {
-                        r = r.max(val);
-                        val = 0;
-                    }
-                    'g' => {
-                        g = g.max(val);
-                        val = 0;
-                    }
-                    'b' => {
-                        b = b.max(val);
-                        val = 0;
-                    }
-                    '\0' => {
-                        success += r * g * b;
-                        break;
-                    }
-                    ',' => {
-                        val = 0;
-                    }
-                    ';' => {
-                        val = 0;
-                    }
-                    _ => {}
-                },
             }
         }
 
         success += r * g * b;
     }
 
-    success
+    success as usize
 }
 
 #[test]
