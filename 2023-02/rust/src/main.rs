@@ -88,8 +88,8 @@ fn part2(input: &str) -> usize {
         .sum()
 }
 
-// Thanks to @RANKSHANK from Prime's discord for giving basis.
-// It's heavily edited, so I can't give full credit.
+// Thanks to members of ThePrimeagens's discord for giving ideas.
+// Still largely my own, but nonetheless, thanks.
 fn speedy_part_2(input: &str) -> usize {
     let mut success: usize = 0;
     let (mut val, mut r, mut g, mut b) = (0usize, 0usize, 0usize, 0usize);
