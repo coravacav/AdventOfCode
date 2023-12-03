@@ -1,9 +1,11 @@
 fn main() {
     let input = include_str!("../input.txt");
     println!("part1: {}", part1(input));
+    println!("speedy_part_1: {}", speedy_part_1(input));
     println!("part2: {}", part2(input));
-    println!("part_2: {}", speedy_part_2(input));
+    println!("speedy_part_2: {}", speedy_part_2(input));
 
+    assert_eq!(part1(input), speedy_part_1(input));
     assert_eq!(part2(input), speedy_part_2(input));
 
     let now = std::time::Instant::now();
@@ -11,6 +13,12 @@ fn main() {
         part1(input);
     }
     println!("part1: {:?}", now.elapsed() / 100000);
+
+    let now = std::time::Instant::now();
+    for _ in 0..100000 {
+        speedy_part_1(input);
+    }
+    println!("speedy_part_1: {:?}", now.elapsed() / 100000);
 
     let now = std::time::Instant::now();
     for _ in 0..100000 {
@@ -22,7 +30,7 @@ fn main() {
     for _ in 0..100000 {
         speedy_part_2(input);
     }
-    println!("part_2: {:?}", now.elapsed() / 100000);
+    println!("speedy_part_2: {:?}", now.elapsed() / 100000);
 }
 
 const MAX_RED: usize = 12;
@@ -88,6 +96,67 @@ fn part2(input: &str) -> usize {
         .sum()
 }
 
+// This one is less heavily optimized than part 2, but still faster than part 1 original, by a significant margin.
+fn speedy_part_1(input: &str) -> usize {
+    let mut success: usize = 0;
+
+    let mut iter = input.as_bytes().iter();
+
+    'outer: while let Some(_) = iter.next() {
+        let mut game_num = 0;
+        let mut val = 0;
+
+        // read till space
+        while !matches!(iter.next(), Some(b' ')) {}
+
+        while let Some(&c @ b'0'..=b'9') = iter.next() {
+            game_num = game_num * 10 + (c - b'0') as usize;
+        }
+
+        while let Some(&c) = iter.next() {
+            match c {
+                b'0'..=b'9' => {
+                    val = val * 10 + (c - b'0') as usize;
+                }
+                b'r' => {
+                    if val > MAX_RED {
+                        break;
+                    }
+
+                    val = 0;
+                }
+                b'g' => {
+                    if val > MAX_GREEN {
+                        break;
+                    }
+
+                    val = 0;
+                }
+                b'b' => {
+                    if val > MAX_BLUE {
+                        break;
+                    }
+
+                    val = 0;
+                }
+                b'\n' => {
+                    success += game_num;
+                    continue 'outer;
+                }
+                _ => {}
+            }
+        }
+
+        if iter.next().is_none() {
+            success += game_num;
+        }
+
+        while !matches!(iter.next(), Some(b'\n') | None) {}
+    }
+
+    success
+}
+
 // Thanks to members of ThePrimeagens's discord for giving ideas.
 // Still largely my own, but nonetheless, thanks.
 fn speedy_part_2(input: &str) -> usize {
@@ -111,12 +180,9 @@ fn speedy_part_2(input: &str) -> usize {
                 b = b.max(val);
                 val = 0;
             }
-            b'\n' | b'\0' | b':' => {
+            b'\n' | b':' => {
                 success += r * g * b;
                 (val, r, g, b) = (0, 0, 0, 0);
-            }
-            b',' | b';' => {
-                val = 0;
             }
             _ => {}
         }
