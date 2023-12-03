@@ -14,6 +14,24 @@ macro_rules! simple_benchmark {
 }
 
 #[macro_export]
+macro_rules! bench_this {
+    ($block:block, $iterations:expr) => {{
+        let ans = $block;
+
+        let now = std::time::Instant::now();
+        for _ in 0..$iterations {
+            $block
+        }
+        println!("{:?}", now.elapsed() / $iterations);
+
+        ans
+    }};
+    ($block:block) => {
+        bench_this!($block, 100_000);
+    };
+}
+
+#[macro_export]
 macro_rules! assert_eq_same_input {
     ($input:expr, $($name:ident),+) => {
         assert_eq!(
