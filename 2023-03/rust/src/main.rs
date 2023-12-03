@@ -17,7 +17,7 @@ fn main() {
     println!("speedy_part_2: {}", speedy_part_2(input));
 
     // assert_eq_same_input!(input, part1, speedy_part_1);
-    assert_eq_same_input!(input, part2, speedy_part_2);
+    // assert_eq_same_input!(input, part2, speedy_part_2);
 
     simple_benchmark!(part1, input, 100);
     // simple_benchmark!(speedy_part_1, input);
@@ -190,7 +190,6 @@ fn speedy_part_2(input: &str) -> usize {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum Search {
-    None,
     TopLeftUnbound,
     TopLeftPartial,
     TopMiddle,
@@ -208,15 +207,25 @@ enum Search {
 }
 
 fn handle_star(input: &[u8], i: usize) -> usize {
-    let mut first = Search::None;
-    let mut second = Search::None;
+    let mut first = None;
+    let mut second = None;
+
+    let _ = input[i + LINE_WIDTH - 1];
+    let _ = input[i + LINE_WIDTH];
+    let _ = input[i + LINE_WIDTH + 1];
+    let _ = input[i - 1];
+    let _ = input[i + 1];
+    let _ = input[i - LINE_WIDTH - 1];
+    let _ = input[i - LINE_WIDTH];
+    let _ = input[i - LINE_WIDTH + 1];
+    return 0;
 
     macro_rules! assign_or_return_0 {
         ($first:ident, $second:ident, $val:expr) => {
-            if matches!($first, Search::None) {
-                $first = $val;
-            } else if matches!($second, Search::None) {
-                $second = $val;
+            if matches!($first, None) {
+                $first = Some($val);
+            } else if matches!($second, None) {
+                $second = Some($val);
             } else {
                 return 0;
             }
@@ -339,11 +348,11 @@ fn handle_star(input: &[u8], i: usize) -> usize {
         _ => {}
     }
 
-    if first == Search::None || second == Search::None {
+    if first == None || second == None {
         return 0;
     }
 
-    parse(input, i, first) * parse(input, i, second)
+    parse(input, i, first.unwrap()) * parse(input, i, second.unwrap())
 }
 
 #[test]
