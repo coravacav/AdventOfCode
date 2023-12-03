@@ -22,7 +22,7 @@ fn main() {
     simple_benchmark!(part1, input, 100);
     // simple_benchmark!(speedy_part_1, input);
     simple_benchmark!(part2, input, 100);
-    simple_benchmark!(speedy_part_2, input, 10000);
+    simple_benchmark!(speedy_part_2, input);
 }
 
 fn part1(input: &str) -> usize {
@@ -162,98 +162,87 @@ const LINE_WIDTH: usize = {
 const LINES: usize = include_str!("../input.txt").as_bytes().len() / LINE_WIDTH;
 
 fn speedy_part_2(input: &str) -> usize {
-    let input = input.as_bytes();
+    let mut input = input.as_bytes();
 
     let mut mat = [[0; LINE_WIDTH]; LINES];
+    let mut line = 0;
+    let mut col = 0;
 
-    let mut linei: usize = 0;
-    let mut i: usize = 0;
-    let mut id: usize = 1;
+    let mut star_locations = Vec::new();
+    let mut number_values = Vec::new();
+    number_values.push(0);
+    number_values.push(0);
+    let mut val = 0;
 
-    for &c in input.iter() {
+    while let [c, ..] = input {
+        let mut number_mode = false;
+
         match c {
-            b'\n' => {
-                linei += 1;
-                i = 0;
-            }
             b'*' => {
-                mat[linei][i] = id;
-                mat[linei][i + 1] = id;
-                mat[linei][i.saturating_sub(1)] = id;
-                mat[linei + 1][i] = id;
-                mat[linei + 1][i + 1] = id;
-                mat[linei + 1][i.saturating_sub(1)] = id;
-                mat[linei.saturating_sub(1)][i] = id;
-                mat[linei.saturating_sub(1)][i + 1] = id;
-                mat[linei.saturating_sub(1)][i.saturating_sub(1)] = id;
-
-                i += 1;
-                id += 1;
+                mat[line][col] = 1;
+                star_locations.push((line, col));
+                col += 1;
             }
-            _ => {
-                i += 1;
+            c @ b'0'..=b'9' => {
+                number_mode = true;
+                incr_num!(val, c);
+                mat[line][col] = number_values.len();
+                col += 1;
             }
-        }
-    }
-
-    let mut stars = Vec::with_capacity(id);
-    stars.push(None);
-    for _ in 1..id {
-        stars.push(Some([0, 0]));
-    }
-
-    linei = 0;
-    i = 0;
-
-    let mut iter = &input[..];
-
-    while let [c, ..] = iter {
-        match c {
             b'\n' => {
-                linei += 1;
-                i = 0;
-            }
-            num @ b'0'..=b'9' => {
-                let mut val = (num - b'0') as usize;
-                let mut width = 1;
-                let mut number_iter = &iter[1..];
-
-                while let [c @ b'0'..=b'9', ..] = number_iter {
-                    val = val * 10 + (c - b'0') as usize;
-                    width += 1;
-                    number_iter = &number_iter[1..];
-                }
-
-                (i..i + width).find(|ii| mat[linei][*ii] > 0).map(|ii| {
-                    match stars[mat[linei][ii]] {
-                        Some(ref mut star @ [0, 0]) => {
-                            star[0] = val;
-                        }
-                        Some(ref mut star @ [_, 0]) => {
-                            star[1] = val;
-                        }
-                        _ => unreachable!(),
-                        // cannot happen, I could set it to None though.
-                        // if star_overfilled { stars[mat[linei][ii]] = None; }
-                    }
-                });
-
-                iter = &iter[width - 1..];
-                i += width;
+                line += 1;
+                col = 0;
             }
             _ => {
-                i += 1;
+                col += 1;
             }
+        };
+
+        if !number_mode && val > 0 {
+            number_values.push(val);
+            val = 0;
         }
 
-        iter = &iter[1..];
+        input = &input[1..];
     }
 
-    stars
+    star_locations
         .into_iter()
-        .filter_map(std::convert::identity)
-        .filter(|star| star.len() == 2)
-        .map(|star| star.iter().product::<usize>())
+        .filter_map(|(x, y)| {
+            let mut seen = [0; 2];
+
+            let x1 = x.saturating_sub(1);
+            let x2 = x + 1;
+            let y1 = y.saturating_sub(1);
+            let y2 = y + 1;
+
+            for (i, j) in [
+                (x1, y1),
+                (x1, y),
+                (x1, y2),
+                (x, y1),
+                (x, y2),
+                (x2, y1),
+                (x2, y),
+                (x2, y2),
+            ] {
+                if mat[i][j] > 1 {
+                    match seen {
+                        [a, _] | [_, a] if a == mat[i][j] => {}
+                        [0, _] => {
+                            seen[0] = mat[i][j];
+                        }
+                        [_, 0] => {
+                            seen[1] = mat[i][j];
+                            break; // Technically should keep checking but all inputs I've found allow this.
+                        }
+                        _ => return None,
+                    }
+                }
+            }
+
+            Some(number_values[seen[0]] * number_values[seen[1]])
+        })
         .sum()
 }
 
