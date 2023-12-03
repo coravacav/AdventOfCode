@@ -175,19 +175,15 @@ fn speedy_part_2(input: &str) -> usize {
         .as_bytes()
         .iter()
         .enumerate()
-        .map(|(i, c)| {
-            if i < LINE_WIDTH + 1
-                || i >= INPUT_SIZE - LINE_WIDTH - 1
-                || i % LINE_WIDTH == 0
-                || i % LINE_WIDTH == LINE_WIDTH - 1
-            {
-                return 0;
-            }
-
-            match c {
-                b'*' => handle_star(input.as_bytes(), i),
-                _ => 0,
-            }
+        .filter(|&(i, _)| {
+            i > LINE_WIDTH + 1
+                && i < INPUT_SIZE - LINE_WIDTH - 1
+                && i % LINE_WIDTH != 0
+                && i % LINE_WIDTH != LINE_WIDTH - 1
+        })
+        .map(|(i, c)| match c {
+            b'*' => handle_star(input.as_bytes(), i),
+            _ => 0,
         })
         .sum()
 }
@@ -250,38 +246,21 @@ fn handle_star(input: &[u8], i: usize) -> usize {
             return 0;
         }
 
-        let left = match search_location {
-            Search::TopLeftUnbound => i - LINE_WIDTH - 3,
-            Search::TopLeftPartial => i - LINE_WIDTH - 2,
-            Search::TopFull => i - LINE_WIDTH - 1,
-            Search::BottomLeftPartial => i + LINE_WIDTH - 2,
-            Search::BottomLeftUnbound => i + LINE_WIDTH - 3,
-            Search::BottomFull => i + LINE_WIDTH - 1,
-            Search::TopMiddle => i - LINE_WIDTH,
-            Search::TopRightPartial => i - LINE_WIDTH,
-            Search::BottomRightPartial => i + LINE_WIDTH,
-            Search::BottomMiddle => i + LINE_WIDTH,
-            Search::TopRightUnbound => i - LINE_WIDTH + 1,
-            Search::RightUnbound => i + 1,
-            Search::BottomRightUnbound => i + LINE_WIDTH + 1,
-            Search::LeftUnbound => i - 3,
-            _ => unreachable!(),
-        };
-
-        let right = match search_location {
-            Search::TopRightPartial => i - LINE_WIDTH + 2,
-            Search::TopRightUnbound => i - LINE_WIDTH + 3,
-            Search::TopFull => i - LINE_WIDTH + 1,
-            Search::BottomFull => i + LINE_WIDTH + 1,
-            Search::BottomLeftPartial => i + LINE_WIDTH,
-            Search::BottomLeftUnbound => i + LINE_WIDTH - 1,
-            Search::TopLeftPartial | Search::TopMiddle => i - LINE_WIDTH,
-            Search::BottomRightPartial => i + LINE_WIDTH + 2,
-            Search::BottomMiddle => i + LINE_WIDTH,
-            Search::TopLeftUnbound => i - LINE_WIDTH - 1,
-            Search::RightUnbound => i + 3,
-            Search::BottomRightUnbound => i + LINE_WIDTH + 3,
-            Search::LeftUnbound => i - 1,
+        let (left, right) = match search_location {
+            Search::BottomFull => (i + LINE_WIDTH - 1, i + LINE_WIDTH + 1),
+            Search::BottomLeftPartial => (i + LINE_WIDTH - 2, i + LINE_WIDTH),
+            Search::BottomLeftUnbound => (i + LINE_WIDTH - 3, i + LINE_WIDTH - 1),
+            Search::BottomMiddle => (i + LINE_WIDTH, i + LINE_WIDTH),
+            Search::BottomRightPartial => (i + LINE_WIDTH, i + LINE_WIDTH + 2),
+            Search::BottomRightUnbound => (i + LINE_WIDTH + 1, i + LINE_WIDTH + 3),
+            Search::LeftUnbound => (i - 3, i - 1),
+            Search::RightUnbound => (i + 1, i + 3),
+            Search::TopFull => (i - LINE_WIDTH - 1, i - LINE_WIDTH + 1),
+            Search::TopLeftPartial => (i - LINE_WIDTH - 2, i - LINE_WIDTH),
+            Search::TopLeftUnbound => (i - LINE_WIDTH - 3, i - LINE_WIDTH - 1),
+            Search::TopMiddle => (i - LINE_WIDTH, i - LINE_WIDTH),
+            Search::TopRightPartial => (i - LINE_WIDTH, i - LINE_WIDTH + 2),
+            Search::TopRightUnbound => (i - LINE_WIDTH + 1, i - LINE_WIDTH + 3),
             _ => unreachable!(),
         };
 

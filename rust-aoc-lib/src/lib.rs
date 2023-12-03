@@ -15,20 +15,12 @@ macro_rules! simple_benchmark {
 
 #[macro_export]
 macro_rules! bench_this {
-    ($block:block, $iterations:expr) => {{
-        let ans = $block;
-
+    ($expr:expr) => {{
         let now = std::time::Instant::now();
-        for _ in 0..$iterations {
-            $block
-        }
-        println!("{:?}", now.elapsed() / $iterations);
-
+        let ans = $expr;
+        println!("{:?}", now.elapsed());
         ans
     }};
-    ($block:block) => {
-        bench_this!($block, 100_000);
-    };
 }
 
 #[macro_export]
