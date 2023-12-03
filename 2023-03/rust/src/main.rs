@@ -210,16 +210,6 @@ fn handle_star(input: &[u8], i: usize) -> usize {
     let mut first = None;
     let mut second = None;
 
-    let _ = input[i + LINE_WIDTH - 1];
-    let _ = input[i + LINE_WIDTH];
-    let _ = input[i + LINE_WIDTH + 1];
-    let _ = input[i - 1];
-    let _ = input[i + 1];
-    let _ = input[i - LINE_WIDTH - 1];
-    let _ = input[i - LINE_WIDTH];
-    let _ = input[i - LINE_WIDTH + 1];
-    return 0;
-
     macro_rules! assign_or_return_0 {
         ($first:ident, $second:ident, $val:expr) => {
             if matches!($first, None) {
@@ -354,6 +344,81 @@ fn handle_star(input: &[u8], i: usize) -> usize {
 
     parse(input, i, first.unwrap()) * parse(input, i, second.unwrap())
 }
+
+// This was the old version, marginally slower.
+// fn speedy_part_2(input: &str) -> usize {
+//     let mut mat = [[0u16; LINE_WIDTH]; LINES];
+//     let mut line = 0;
+//     let mut col = 0;
+
+//     let mut star_locations = Vec::new();
+//     let mut number_values = Vec::new();
+//     number_values.push(0);
+//     number_values.push(0);
+//     let mut val = 0;
+
+//     for c in input.as_bytes() {
+//         match c {
+//             b'*' => {
+//                 mat[line][col] = 1;
+//                 star_locations.push((line, col));
+//                 col += 1;
+//             }
+//             c @ b'0'..=b'9' => {
+//                 incr_num!(val, c);
+//                 mat[line][col] = number_values.len() as u16;
+//                 col += 1;
+//                 continue;
+//             }
+//             b'\n' => {
+//                 line += 1;
+//                 col = 0;
+//             }
+//             _ => {
+//                 col += 1;
+//             }
+//         };
+
+//         if val > 0 {
+//             number_values.push(val);
+//             val = 0;
+//         }
+//     }
+
+//     star_locations
+//         .into_iter()
+//         .filter_map(|(x, y)| {
+//             let mut seen = [0; 2];
+
+//             for (i, j) in [
+//                 (x, y - 1),
+//                 (x, y + 1),
+//                 (x - 1, y - 1),
+//                 (x - 1, y),
+//                 (x - 1, y + 1),
+//                 (x + 1, y - 1),
+//                 (x + 1, y),
+//                 (x + 1, y + 1),
+//             ] {
+//                 if mat[i][j] > 1 {
+//                     match seen {
+//                         [a, _] | [_, a] if a == mat[i][j] => {}
+//                         [0, _] => {
+//                             seen[0] = mat[i][j];
+//                         }
+//                         [_, 0] => {
+//                             seen[1] = mat[i][j];
+//                             break; // Technically should keep checking but all inputs I've found allow this.
+//                         }
+//                         _ => return None,
+//                     }
+//                 }
+//             }
+
+//             Some(number_values[seen[0] as usize] * number_values[seen[1] as usize])
+//         })
+//         .sum()
+// }
 
 #[test]
 fn test_part1() {
