@@ -162,8 +162,6 @@ const LINE_WIDTH: usize = {
 const LINES: usize = include_str!("../input.txt").as_bytes().len() / LINE_WIDTH;
 
 fn speedy_part_2(input: &str) -> usize {
-    let mut input = input.as_bytes();
-
     let mut mat = [[0u16; LINE_WIDTH]; LINES];
     let mut line = 0;
     let mut col = 0;
@@ -174,9 +172,7 @@ fn speedy_part_2(input: &str) -> usize {
     number_values.push(0);
     let mut val = 0;
 
-    for c in input {
-        let mut number_mode = false;
-
+    for c in input.as_bytes() {
         match c {
             b'*' => {
                 mat[line][col] = 1;
@@ -184,10 +180,10 @@ fn speedy_part_2(input: &str) -> usize {
                 col += 1;
             }
             c @ b'0'..=b'9' => {
-                number_mode = true;
                 incr_num!(val, c);
                 mat[line][col] = number_values.len() as u16;
                 col += 1;
+                continue;
             }
             b'\n' => {
                 line += 1;
@@ -198,7 +194,7 @@ fn speedy_part_2(input: &str) -> usize {
             }
         };
 
-        if !number_mode && val > 0 {
+        if val > 0 {
             number_values.push(val);
             val = 0;
         }
