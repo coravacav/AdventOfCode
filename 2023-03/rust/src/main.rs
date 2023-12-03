@@ -14,15 +14,15 @@ fn main() {
     println!("part1: {}", part1(input));
     println!("part2: {}", part2(input));
     // println!("speedy_part_1: {}", speedy_part_1(input));
-    // println!("speedy_part_2: {}", speedy_part_2(input));
+    println!("speedy_part_2: {}", speedy_part_2(input));
 
     // assert_eq_same_input!(input, part1, speedy_part_1);
-    // assert_eq_same_input!(input, part2, speedy_part_2);
+    assert_eq_same_input!(input, part2, speedy_part_2);
 
-    // simple_benchmark!(part1, input);
+    simple_benchmark!(part1, input, 1000);
     // simple_benchmark!(speedy_part_1, input);
-    // simple_benchmark!(part2, input);
-    // simple_benchmark!(speedy_part_2, input);
+    simple_benchmark!(part2, input, 1000);
+    simple_benchmark!(speedy_part_2, input, 1000);
 }
 
 fn part1(input: &str) -> usize {
@@ -151,6 +151,109 @@ fn part2(input: &str) -> usize {
         .sum()
 }
 
+const LINE_WIDTH: usize = {
+    let mut line_width = 0;
+    while include_str!("../input.txt").as_bytes()[line_width] != b'\n' {
+        line_width += 1;
+    }
+    line_width
+};
+
+const LINES: usize = include_str!("../input.txt").as_bytes().len() / LINE_WIDTH;
+
+fn speedy_part_2(input: &str) -> usize {
+    let input = input.as_bytes();
+
+    let mut mat = Vec::with_capacity(LINES);
+    for _ in 0..LINES {
+        mat.push(vec![0; LINE_WIDTH]);
+    }
+
+    let mut linei: usize = 0;
+    let mut i: usize = 0;
+    let mut id: usize = 1;
+
+    for &c in input.iter() {
+        match c {
+            b'\n' => {
+                linei += 1;
+                i = 0;
+            }
+            b'*' => {
+                mat[linei][i] = id;
+                mat[linei][i + 1] = id;
+                mat[linei][i.saturating_sub(1)] = id;
+                mat[linei + 1][i] = id;
+                mat[linei + 1][i + 1] = id;
+                mat[linei + 1][i.saturating_sub(1)] = id;
+                mat[linei.saturating_sub(1)][i] = id;
+                mat[linei.saturating_sub(1)][i + 1] = id;
+                mat[linei.saturating_sub(1)][i.saturating_sub(1)] = id;
+
+                i += 1;
+                id += 1;
+            }
+            _ => {
+                i += 1;
+            }
+        }
+    }
+
+    let mut stars = Vec::with_capacity(id);
+    stars.push(None);
+    for _ in 1..id {
+        stars.push(Some(Vec::new()));
+    }
+
+    linei = 0;
+    i = 0;
+
+    let mut iter = input.iter().peekable();
+
+    while let Some(&c) = iter.next() {
+        match c {
+            b'\n' => {
+                linei += 1;
+                i = 0;
+            }
+            num @ b'0'..=b'9' => {
+                let mut val = (num - b'0') as usize;
+                let mut width = 1;
+
+                while let Some(b'0'..=b'9') = iter.peek() {
+                    val = val * 10 + (iter.next().unwrap() - b'0') as usize;
+                    width += 1;
+                }
+
+                let mut vec = Vec::new();
+
+                for ii in i..i + width {
+                    if let Some(ref mut star) = stars[mat[linei][ii]] {
+                        if vec.contains(&mat[linei][ii]) {
+                            continue;
+                        }
+
+                        star.push(val);
+                        vec.push(mat[linei][ii]);
+                    }
+                }
+
+                i += width;
+            }
+            _ => {
+                i += 1;
+            }
+        }
+    }
+
+    stars
+        .into_iter()
+        .filter_map(std::convert::identity)
+        .filter(|star| star.len() == 2)
+        .map(|star| star.iter().product::<usize>())
+        .sum()
+}
+
 #[test]
 fn test_part1() {
     let test = r#"467..114..
@@ -179,4 +282,19 @@ fn test_part2() {
 ...$.*....
 .664.598.."#;
     assert_eq!(part2(test), 467835);
+}
+
+#[test]
+fn test_speedy_part_2() {
+    let test = r#"467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598.."#;
+    assert_eq!(speedy_part_2(test), 467835);
 }
