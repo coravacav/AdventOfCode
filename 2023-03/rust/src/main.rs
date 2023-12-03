@@ -211,20 +211,15 @@ fn speedy_part_2(input: &str) -> usize {
         .filter_map(|(x, y)| {
             let mut seen = [0; 2];
 
-            let x1 = x.saturating_sub(1);
-            let x2 = x + 1;
-            let y1 = y.saturating_sub(1);
-            let y2 = y + 1;
-
             for (i, j) in [
-                (x1, y1),
-                (x1, y),
-                (x1, y2),
-                (x, y1),
-                (x, y2),
-                (x2, y1),
-                (x2, y),
-                (x2, y2),
+                (x, y - 1),
+                (x, y + 1),
+                (x - 1, y - 1),
+                (x - 1, y),
+                (x - 1, y + 1),
+                (x + 1, y - 1),
+                (x + 1, y),
+                (x + 1, y + 1),
             ] {
                 if mat[i][j] > 1 {
                     match seen {
