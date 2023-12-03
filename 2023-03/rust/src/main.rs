@@ -161,18 +161,10 @@ const LINE_WIDTH: usize = {
 
 const LINES: usize = include_str!("../input.txt").as_bytes().len() / LINE_WIDTH;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Status {
-    Unknown,
-    Empty,
-    Star(usize),
-    Number,
-}
-
 fn speedy_part_2(input: &str) -> usize {
     let input = input.as_bytes();
 
-    let mut mat = [[Status::Unknown; LINE_WIDTH]; LINES];
+    let mut mat = [[0; LINE_WIDTH]; LINES];
 
     let mut linei: usize = 0;
     let mut i: usize = 0;
@@ -185,15 +177,15 @@ fn speedy_part_2(input: &str) -> usize {
                 i = 0;
             }
             b'*' => {
-                mat[linei][i] = Status::Star(id);
-                mat[linei][i + 1] = Status::Star(id);
-                mat[linei][i.saturating_sub(1)] = Status::Star(id);
-                mat[linei + 1][i] = Status::Star(id);
-                mat[linei + 1][i + 1] = Status::Star(id);
-                mat[linei + 1][i.saturating_sub(1)] = Status::Star(id);
-                mat[linei.saturating_sub(1)][i] = Status::Star(id);
-                mat[linei.saturating_sub(1)][i + 1] = Status::Star(id);
-                mat[linei.saturating_sub(1)][i.saturating_sub(1)] = Status::Star(id);
+                mat[linei][i] = id;
+                mat[linei][i + 1] = id;
+                mat[linei][i.saturating_sub(1)] = id;
+                mat[linei + 1][i] = id;
+                mat[linei + 1][i + 1] = id;
+                mat[linei + 1][i.saturating_sub(1)] = id;
+                mat[linei.saturating_sub(1)][i] = id;
+                mat[linei.saturating_sub(1)][i + 1] = id;
+                mat[linei.saturating_sub(1)][i.saturating_sub(1)] = id;
 
                 i += 1;
                 id += 1;
