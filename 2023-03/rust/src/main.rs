@@ -244,10 +244,6 @@ fn handle_star(input: &[u8], i: usize) -> usize {
     }
 
     fn parse(input: &[u8], i: usize, search_location: Search) -> usize {
-        if matches!(search_location, Search::None) {
-            return 0;
-        }
-
         let (left, right) = match search_location {
             Search::BottomFull => (i + LINE_WIDTH - 1, i + LINE_WIDTH + 1),
             Search::BottomLeftPartial => (i + LINE_WIDTH - 2, i + LINE_WIDTH),
