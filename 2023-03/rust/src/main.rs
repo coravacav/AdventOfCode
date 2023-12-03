@@ -227,86 +227,65 @@ fn handle_star(input: &[u8], i: usize) -> usize {
         };
     }
 
-    /// walk_left
-    fn w_l(input: &[u8], start: usize) -> usize {
-        let mut i = start;
-        while matches!(input[i], b'0'..=b'9') {
-            if i == 0 {
-                return 0;
-            }
-            i -= 1;
-        }
-        i + 1
-    }
-
-    /// walk_right
-    fn w_r(input: &[u8], start: usize) -> usize {
-        let mut i = start;
-        while matches!(input[i], b'0'..=b'9') {
-            if i == INPUT_SIZE - 2 {
-                break;
-            }
-            i += 1;
-        }
-        i
-    }
-
     fn read_precise(input: &[u8], start: usize, end: usize) -> usize {
-        let mut number_iter = &input[start..=end];
-        let mut val = 0;
-
-        // Walk enough left to be sure we're at the start of the number
-
-        while let [c @ b'0'..=b'9', ..] = number_iter {
-            val = val * 10 + (c - b'0') as usize;
-            number_iter = &number_iter[1..];
+        match &input[start..=end] {
+            [h @ b'0'..=b'9', t @ b'0'..=b'9', o @ b'0'..=b'9'] => {
+                (h - b'0') as usize * 100 + (t - b'0') as usize * 10 + (o - b'0') as usize
+            }
+            [t @ b'0'..=b'9', o @ b'0'..=b'9'] => (t - b'0') as usize * 10 + (o - b'0') as usize,
+            [_, t @ b'0'..=b'9', o @ b'0'..=b'9'] => (t - b'0') as usize * 10 + (o - b'0') as usize,
+            [_, _, o @ b'0'..=b'9'] => (o - b'0') as usize,
+            [t @ b'0'..=b'9', o @ b'0'..=b'9', _] => (t - b'0') as usize * 10 + (o - b'0') as usize,
+            [_, o @ b'0'..=b'9', _] => (o - b'0') as usize,
+            [o @ b'0'..=b'9', _, _] => (o - b'0') as usize,
+            [_, o @ b'0'..=b'9'] => (o - b'0') as usize,
+            [o @ b'0'..=b'9', _] => (o - b'0') as usize,
+            [o @ b'0'..=b'9'] => (o - b'0') as usize,
+            _ => unreachable!(),
         }
-
-        val
     }
 
     fn parse(input: &[u8], i: usize, search_location: Search) -> usize {
-        match search_location {
-            Search::None => 0,
-            Search::TopLeftUnbound => {
-                read_precise(input, w_l(input, i - LINE_WIDTH - 1), i - LINE_WIDTH + 1)
-            }
-            Search::TopLeftPartial => {
-                read_precise(input, w_l(input, i - LINE_WIDTH - 1), i - LINE_WIDTH)
-            }
-            Search::TopMiddle => read_precise(input, i - LINE_WIDTH, i - LINE_WIDTH),
-            Search::TopFull => read_precise(
-                input,
-                w_l(input, i - LINE_WIDTH - 1),
-                w_r(input, i - LINE_WIDTH + 1),
-            ),
-            Search::TopRightPartial => {
-                read_precise(input, i - LINE_WIDTH, w_r(input, i - LINE_WIDTH + 1))
-            }
-            Search::TopRightUnbound => {
-                read_precise(input, i - LINE_WIDTH + 1, w_r(input, i - LINE_WIDTH + 1))
-            }
-            Search::RightUnbound => read_precise(input, i + 1, w_r(input, i + 1)),
-            Search::BottomRightUnbound => {
-                read_precise(input, i + LINE_WIDTH + 1, w_r(input, i + LINE_WIDTH + 1))
-            }
-            Search::BottomRightPartial => {
-                read_precise(input, i + LINE_WIDTH, w_r(input, i + LINE_WIDTH + 1))
-            }
-            Search::BottomMiddle => read_precise(input, i + LINE_WIDTH, i + LINE_WIDTH),
-            Search::BottomFull => read_precise(
-                input,
-                w_l(input, i + LINE_WIDTH - 1),
-                w_r(input, i + LINE_WIDTH + 1),
-            ),
-            Search::BottomLeftPartial => {
-                read_precise(input, w_l(input, i + LINE_WIDTH - 1), i + LINE_WIDTH)
-            }
-            Search::BottomLeftUnbound => {
-                read_precise(input, w_l(input, i + LINE_WIDTH - 1), i + LINE_WIDTH - 1)
-            }
-            Search::LeftUnbound => read_precise(input, w_l(input, i - 1), i - 1),
+        if matches!(search_location, Search::None) {
+            return 0;
         }
+
+        let left = match search_location {
+            Search::TopLeftUnbound => i - LINE_WIDTH - 3,
+            Search::TopLeftPartial => i - LINE_WIDTH - 2,
+            Search::TopFull => i - LINE_WIDTH - 1,
+            Search::BottomLeftPartial => i + LINE_WIDTH - 2,
+            Search::BottomLeftUnbound => i + LINE_WIDTH - 3,
+            Search::BottomFull => i + LINE_WIDTH - 1,
+            Search::TopMiddle => i - LINE_WIDTH,
+            Search::TopRightPartial => i - LINE_WIDTH,
+            Search::BottomRightPartial => i + LINE_WIDTH,
+            Search::BottomMiddle => i + LINE_WIDTH,
+            Search::TopRightUnbound => i - LINE_WIDTH + 1,
+            Search::RightUnbound => i + 1,
+            Search::BottomRightUnbound => i + LINE_WIDTH + 1,
+            Search::LeftUnbound => i - 3,
+            _ => unreachable!(),
+        };
+
+        let right = match search_location {
+            Search::TopRightPartial => i - LINE_WIDTH + 2,
+            Search::TopRightUnbound => i - LINE_WIDTH + 3,
+            Search::TopFull => i - LINE_WIDTH + 1,
+            Search::BottomFull => i + LINE_WIDTH + 1,
+            Search::BottomLeftPartial => i + LINE_WIDTH,
+            Search::BottomLeftUnbound => i + LINE_WIDTH - 1,
+            Search::TopLeftPartial | Search::TopMiddle => i - LINE_WIDTH,
+            Search::BottomRightPartial => i + LINE_WIDTH + 2,
+            Search::BottomMiddle => i + LINE_WIDTH,
+            Search::TopLeftUnbound => i - LINE_WIDTH - 1,
+            Search::RightUnbound => i + 3,
+            Search::BottomRightUnbound => i + LINE_WIDTH + 3,
+            Search::LeftUnbound => i - 1,
+            _ => unreachable!(),
+        };
+
+        read_precise(input, left, right)
     }
 
     match [
