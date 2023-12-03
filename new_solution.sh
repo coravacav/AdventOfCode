@@ -10,10 +10,17 @@ fi
 
 target_dir=$solution_name/$template
 
+# abort if target directory already exists
+if [ -d "$target_dir" ]; then
+    echo -n "Directory $target_dir already exists"
+    exit 1
+fi
+
 mkdir -p $target_dir
 
 cp -rT templates/$template-template $target_dir
 
 if [ "$template" == "rust" ]; then
-    sed -i "s/rust/$solution_name/g" $target_dir/Cargo.toml
+    # replace the first occurence of rust
+    sed -i "0,/rust/s/rust/$solution_name/" $target_dir/Cargo.toml
 fi
