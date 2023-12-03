@@ -19,10 +19,10 @@ fn main() {
     // assert_eq_same_input!(input, part1, speedy_part_1);
     assert_eq_same_input!(input, part2, speedy_part_2);
 
-    simple_benchmark!(part1, input, 1000);
+    simple_benchmark!(part1, input, 100);
     // simple_benchmark!(speedy_part_1, input);
-    simple_benchmark!(part2, input, 1000);
-    simple_benchmark!(speedy_part_2, input, 1000);
+    simple_benchmark!(part2, input, 100);
+    simple_benchmark!(speedy_part_2, input, 10000);
 }
 
 fn part1(input: &str) -> usize {
@@ -161,13 +161,18 @@ const LINE_WIDTH: usize = {
 
 const LINES: usize = include_str!("../input.txt").as_bytes().len() / LINE_WIDTH;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Status {
+    Unknown,
+    Empty,
+    Star(usize),
+    Number,
+}
+
 fn speedy_part_2(input: &str) -> usize {
     let input = input.as_bytes();
 
-    let mut mat = Vec::with_capacity(LINES);
-    for _ in 0..LINES {
-        mat.push(vec![0; LINE_WIDTH]);
-    }
+    let mut mat = [[Status::Unknown; LINE_WIDTH]; LINES];
 
     let mut linei: usize = 0;
     let mut i: usize = 0;
@@ -180,15 +185,15 @@ fn speedy_part_2(input: &str) -> usize {
                 i = 0;
             }
             b'*' => {
-                mat[linei][i] = id;
-                mat[linei][i + 1] = id;
-                mat[linei][i.saturating_sub(1)] = id;
-                mat[linei + 1][i] = id;
-                mat[linei + 1][i + 1] = id;
-                mat[linei + 1][i.saturating_sub(1)] = id;
-                mat[linei.saturating_sub(1)][i] = id;
-                mat[linei.saturating_sub(1)][i + 1] = id;
-                mat[linei.saturating_sub(1)][i.saturating_sub(1)] = id;
+                mat[linei][i] = Status::Star(id);
+                mat[linei][i + 1] = Status::Star(id);
+                mat[linei][i.saturating_sub(1)] = Status::Star(id);
+                mat[linei + 1][i] = Status::Star(id);
+                mat[linei + 1][i + 1] = Status::Star(id);
+                mat[linei + 1][i.saturating_sub(1)] = Status::Star(id);
+                mat[linei.saturating_sub(1)][i] = Status::Star(id);
+                mat[linei.saturating_sub(1)][i + 1] = Status::Star(id);
+                mat[linei.saturating_sub(1)][i.saturating_sub(1)] = Status::Star(id);
 
                 i += 1;
                 id += 1;
@@ -202,7 +207,7 @@ fn speedy_part_2(input: &str) -> usize {
     let mut stars = Vec::with_capacity(id);
     stars.push(None);
     for _ in 1..id {
-        stars.push(Some(Vec::new()));
+        stars.push(Some([0, 0]));
     }
 
     linei = 0;
@@ -225,18 +230,19 @@ fn speedy_part_2(input: &str) -> usize {
                     width += 1;
                 }
 
-                let mut vec = Vec::new();
-
-                for ii in i..i + width {
-                    if let Some(ref mut star) = stars[mat[linei][ii]] {
-                        if vec.contains(&mat[linei][ii]) {
-                            continue;
+                (i..i + width).find(|ii| mat[linei][*ii] > 0).map(|ii| {
+                    match stars[mat[linei][ii]] {
+                        Some(ref mut star @ [0, 0]) => {
+                            star[0] = val;
                         }
-
-                        star.push(val);
-                        vec.push(mat[linei][ii]);
+                        Some(ref mut star @ [_, 0]) => {
+                            star[1] = val;
+                        }
+                        _ => unreachable!(),
+                        // cannot happen, I could set it to None though.
+                        // if star_overfilled { stars[mat[linei][ii]] = None; }
                     }
-                }
+                });
 
                 i += width;
             }
