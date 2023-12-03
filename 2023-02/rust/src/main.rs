@@ -16,6 +16,8 @@ fn main() {
     simple_benchmark!(speedy_part_1, input);
     simple_benchmark!(part2, input);
     simple_benchmark!(speedy_part_2, input);
+
+    if let 0 = 0 {}
 }
 
 const MAX_RED: usize = 12;
@@ -161,9 +163,12 @@ fn speedy_part_2(input: &str) -> usize {
                 b = b.max(val);
                 val = 0;
             }
-            b'\n' | b':' => {
+            b'\n' => {
                 success += r * g * b;
                 (val, r, g, b) = (0, 0, 0, 0);
+            }
+            b':' => {
+                val = 0;
             }
             _ => {}
         }
