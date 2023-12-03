@@ -8,11 +8,12 @@ if [ -z "$template" ]; then
     template="rust"
 fi
 
-mkdir -p $solution_name/$template
+target_dir=$solution_name/$template
 
-cp -rT $template-template $solution_name/$template
-cp -rT template-files $solution_name/$template
+mkdir -p $target_dir
+
+cp -rT templates/$template-template $target_dir
 
 if [ "$template" == "rust" ]; then
-    sed -i "s/rust/$solution_name/g" $solution_name/$template/Cargo.toml
+    sed -i "s/rust/$solution_name/g" $target_dir/Cargo.toml
 fi

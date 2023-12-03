@@ -1,0 +1,3 @@
+[workspace]
+members = ["templates/rust-template", "rust-aoc-lib", "**/rust"]
+resolver = "2"

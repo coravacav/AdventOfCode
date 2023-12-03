@@ -1,36 +1,21 @@
+#![allow(unused)]
+use rust_aoc_lib::*;
+
 fn main() {
     let input = include_str!("../input.txt");
+
     println!("part1: {}", part1(input));
     println!("speedy_part_1: {}", speedy_part_1(input));
     println!("part2: {}", part2(input));
     println!("speedy_part_2: {}", speedy_part_2(input));
 
-    assert_eq!(part1(input), speedy_part_1(input));
-    assert_eq!(part2(input), speedy_part_2(input));
+    assert_eq_same_input!(input, part1, speedy_part_1);
+    assert_eq_same_input!(input, part2, speedy_part_2);
 
-    let now = std::time::Instant::now();
-    for _ in 0..100000 {
-        part1(input);
-    }
-    println!("part1: {:?}", now.elapsed() / 100000);
-
-    let now = std::time::Instant::now();
-    for _ in 0..100000 {
-        speedy_part_1(input);
-    }
-    println!("speedy_part_1: {:?}", now.elapsed() / 100000);
-
-    let now = std::time::Instant::now();
-    for _ in 0..100000 {
-        part2(input);
-    }
-    println!("part2: {:?}", now.elapsed() / 100000);
-
-    let now = std::time::Instant::now();
-    for _ in 0..100000 {
-        speedy_part_2(input);
-    }
-    println!("speedy_part_2: {:?}", now.elapsed() / 100000);
+    simple_benchmark!(part1, input);
+    simple_benchmark!(speedy_part_1, input);
+    simple_benchmark!(part2, input);
+    simple_benchmark!(speedy_part_2, input);
 }
 
 const MAX_RED: usize = 12;
@@ -103,20 +88,16 @@ fn speedy_part_1(input: &str) -> usize {
     let mut iter = input.as_bytes().iter();
 
     'outer: while let Some(_) = iter.next() {
-        let mut game_num = 0;
         let mut val = 0;
 
-        // read till space
-        while !matches!(iter.next(), Some(b' ')) {}
+        read_till!(iter, b' ');
 
-        while let Some(&c @ b'0'..=b'9') = iter.next() {
-            game_num = game_num * 10 + (c - b'0') as usize;
-        }
+        let game_num = read_number!(iter);
 
         while let Some(&c) = iter.next() {
             match c {
                 b'0'..=b'9' => {
-                    val = val * 10 + (c - b'0') as usize;
+                    incr_num!(val, c);
                 }
                 b'r' => {
                     if val > MAX_RED {
@@ -158,7 +139,7 @@ fn speedy_part_1(input: &str) -> usize {
 }
 
 // Thanks to members of ThePrimeagens's discord for giving ideas.
-// Still largely my own, but nonetheless, thanks.
+// Still optimized plenty on my own, but nonetheless, thanks.
 fn speedy_part_2(input: &str) -> usize {
     let mut success: usize = 0;
     let (mut val, mut r, mut g, mut b) = (0usize, 0usize, 0usize, 0usize);
@@ -166,7 +147,7 @@ fn speedy_part_2(input: &str) -> usize {
     for c in input.as_bytes() {
         match c {
             b'0'..=b'9' => {
-                val = val * 10 + (c - b'0') as usize;
+                incr_num!(val, c);
             }
             b'r' => {
                 r = r.max(val);

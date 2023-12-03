@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(unused)]
 
 fn main() {
     let input = include_str!("../input.txt");
@@ -12,11 +12,6 @@ fn main() {
     let now = std::time::Instant::now();
     for _ in 0..1000 {
         assert_eq!(part2(input), answer);
-    }
-    println!("time: {:?}", now.elapsed() / 1000);
-    let now = std::time::Instant::now();
-    for _ in 0..1000 {
-        assert_eq!(part2_regex(input), answer);
     }
     println!("time: {:?}", now.elapsed() / 1000);
 }
@@ -93,10 +88,6 @@ fn part2(input: &str) -> usize {
             _ => 0,
         })
         .sum()
-}
-
-lazy_static::lazy_static! {
-    static ref RE: regex::Regex = regex::Regex::new(r"(?:one|two|three|four|five|six|seven|eight|nine|\d)").unwrap();
 }
 
 fn part_two(puzzle_input: &str) -> usize {
