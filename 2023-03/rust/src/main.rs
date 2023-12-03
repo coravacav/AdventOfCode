@@ -205,9 +205,9 @@ fn speedy_part_2(input: &str) -> usize {
     linei = 0;
     i = 0;
 
-    let mut iter = input.iter().peekable();
+    let mut iter = &input[..];
 
-    while let Some(&c) = iter.next() {
+    while let [c, ..] = iter {
         match c {
             b'\n' => {
                 linei += 1;
@@ -216,10 +216,12 @@ fn speedy_part_2(input: &str) -> usize {
             num @ b'0'..=b'9' => {
                 let mut val = (num - b'0') as usize;
                 let mut width = 1;
+                let mut number_iter = &iter[1..];
 
-                while let Some(b'0'..=b'9') = iter.peek() {
-                    val = val * 10 + (iter.next().unwrap() - b'0') as usize;
+                while let [c @ b'0'..=b'9', ..] = number_iter {
+                    val = val * 10 + (c - b'0') as usize;
                     width += 1;
+                    number_iter = &number_iter[1..];
                 }
 
                 (i..i + width).find(|ii| mat[linei][*ii] > 0).map(|ii| {
@@ -236,12 +238,15 @@ fn speedy_part_2(input: &str) -> usize {
                     }
                 });
 
+                iter = &iter[width - 1..];
                 i += width;
             }
             _ => {
                 i += 1;
             }
         }
+
+        iter = &iter[1..];
     }
 
     stars
