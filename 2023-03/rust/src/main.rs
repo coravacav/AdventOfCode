@@ -174,7 +174,7 @@ fn speedy_part_2(input: &str) -> usize {
     number_values.push(0);
     let mut val = 0;
 
-    while let [c, ..] = input {
+    for c in input {
         let mut number_mode = false;
 
         match c {
@@ -202,8 +202,6 @@ fn speedy_part_2(input: &str) -> usize {
             number_values.push(val);
             val = 0;
         }
-
-        input = &input[1..];
     }
 
     star_locations
