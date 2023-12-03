@@ -228,15 +228,17 @@ fn handle_star(input: &[u8], i: usize) -> usize {
             [h @ b'0'..=b'9', t @ b'0'..=b'9', o @ b'0'..=b'9'] => {
                 (h - b'0') as usize * 100 + (t - b'0') as usize * 10 + (o - b'0') as usize
             }
-            [t @ b'0'..=b'9', o @ b'0'..=b'9'] => (t - b'0') as usize * 10 + (o - b'0') as usize,
-            [_, t @ b'0'..=b'9', o @ b'0'..=b'9'] => (t - b'0') as usize * 10 + (o - b'0') as usize,
-            [_, _, o @ b'0'..=b'9'] => (o - b'0') as usize,
-            [t @ b'0'..=b'9', o @ b'0'..=b'9', _] => (t - b'0') as usize * 10 + (o - b'0') as usize,
-            [_, o @ b'0'..=b'9', _] => (o - b'0') as usize,
-            [o @ b'0'..=b'9', _, _] => (o - b'0') as usize,
-            [_, o @ b'0'..=b'9'] => (o - b'0') as usize,
-            [o @ b'0'..=b'9', _] => (o - b'0') as usize,
-            [o @ b'0'..=b'9'] => (o - b'0') as usize,
+            [t @ b'0'..=b'9', o @ b'0'..=b'9']
+            | [_, t @ b'0'..=b'9', o @ b'0'..=b'9']
+            | [t @ b'0'..=b'9', o @ b'0'..=b'9', _] => {
+                (t - b'0') as usize * 10 + (o - b'0') as usize
+            }
+            [_, _, o @ b'0'..=b'9']
+            | [_, o @ b'0'..=b'9', _]
+            | [o @ b'0'..=b'9', _, _]
+            | [_, o @ b'0'..=b'9']
+            | [o @ b'0'..=b'9', _]
+            | [o @ b'0'..=b'9'] => (o - b'0') as usize,
             _ => unreachable!(),
         }
     }
