@@ -178,6 +178,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "solution-2023-04"
+version = "0.1.0"
+dependencies = [
+ "rust-aoc-lib",
+]
+
+[[package]]
 name = "solution-rust"
 version = "0.1.0"
 dependencies = [
