@@ -52,15 +52,13 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
+    let mut cards = HashSet::new();
     input
         .lines()
-        .map(|line| {
-            let (_, line) = line.split_once(":").unwrap();
-            let mut cards = HashSet::new();
-            let (winners, ours) = line.split_once(" | ").unwrap();
-            let winners = winners.trim();
-            let ours = ours.trim();
-
+        .map(|line| line.split_once(":").unwrap().1)
+        .map(|line| line.split_once(" | ").unwrap())
+        .map(|(winners, ours)| {
+            cards.clear();
             for win in winners.split_whitespace() {
                 let win = win.parse::<usize>().unwrap();
                 cards.insert(win);
