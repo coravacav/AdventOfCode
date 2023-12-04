@@ -22,34 +22,32 @@ fn main() {
 }
 
 fn part1(input: &str) -> usize {
+    let mut cards = HashSet::new();
     input
         .lines()
-        .map(|line| {
-            let (_, line) = line.split_once(":").unwrap();
-            let mut cards = HashSet::new();
-            let (winners, ours) = line.split_once(" | ").unwrap();
-            let winners = winners.trim();
-            let ours = ours.trim();
+        .map(|line| line.split_once(":").unwrap().1)
+        .map(|line| line.split_once(" | ").unwrap())
+        .map(|(winners, ours)| {
+            cards.clear();
+            winners
+                .split_ascii_whitespace()
+                .map(|win| win.parse::<usize>().unwrap())
+                .for_each(|card| {
+                    cards.insert(card);
+                });
 
-            for win in winners.split_whitespace() {
-                let win = win.parse::<usize>().unwrap();
-                cards.insert(win);
-            }
-
-            let mut points = 0;
-
-            for our in ours.split_whitespace() {
+            ours.split_ascii_whitespace().fold(0, |acc, our| {
                 let our = our.parse::<usize>().unwrap();
                 if cards.contains(&our) {
-                    if points == 0 {
-                        points = 1;
+                    if acc == 0 {
+                        1
                     } else {
-                        points *= 2;
+                        acc * 2
                     }
+                } else {
+                    acc
                 }
-            }
-
-            points
+            })
         })
         .sum()
 }
