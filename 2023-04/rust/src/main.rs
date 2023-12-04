@@ -74,7 +74,7 @@ fn part2(input: &str) -> usize {
         })
         .collect_vec();
 
-    let mut c = VecDeque::with_capacity(res.len());
+    let mut c = VecDeque::new();
     for _ in 0..res.len() {
         c.push_back(1);
     }
