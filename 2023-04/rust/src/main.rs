@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 
 #[allow(unused_imports)]
 use rust_aoc_lib::*;
@@ -35,18 +35,13 @@ fn part1(input: &str) -> usize {
                     cards.push(card);
                 });
 
-            ours.split_ascii_whitespace().fold(0, |acc, our| {
-                let our = our.parse::<usize>().unwrap();
-                if cards.contains(&our) {
-                    if acc == 0 {
-                        1
-                    } else {
-                        acc * 2
-                    }
-                } else {
-                    acc
-                }
-            })
+            ours.split_ascii_whitespace()
+                .map(|our| our.parse::<usize>().unwrap())
+                .fold(0, |acc, our| match (cards.contains(&our), acc) {
+                    (false, _) => acc,
+                    (_, 0) => 1,
+                    _ => acc * 2,
+                })
         })
         .sum()
 }
@@ -59,12 +54,14 @@ fn part2(input: &str) -> usize {
         .map(|line| line.split_once(" | ").unwrap())
         .map(|(winners, ours)| {
             cards.clear();
-            for win in winners.split_whitespace() {
-                let win = win.parse::<usize>().unwrap();
-                cards.push(win);
-            }
+            winners
+                .split_ascii_whitespace()
+                .map(|win| win.parse::<usize>().unwrap())
+                .for_each(|card| {
+                    cards.push(card);
+                });
 
-            ours.split_whitespace()
+            ours.split_ascii_whitespace()
                 .map(|x| x.parse::<usize>().unwrap())
                 .filter_map(|x| if cards.contains(&x) { Some(x) } else { None })
                 .count()
@@ -75,10 +72,9 @@ fn part2(input: &str) -> usize {
                 let copies = copy_tracker.pop_front().unwrap_or(1);
 
                 for i in 0..x {
-                    if let Some(val) = copy_tracker.get_mut(i) {
-                        *val += copies;
-                    } else {
-                        copy_tracker.push_back(copies + 1);
+                    match copy_tracker.get_mut(i) {
+                        Some(val) => *val += copies,
+                        None => copy_tracker.push_back(copies),
                     }
                 }
 
