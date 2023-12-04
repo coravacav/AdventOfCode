@@ -171,6 +171,24 @@ const LINE_WIDTH: usize = 11;
 const INPUT_SIZE: usize = 110;
 
 fn speedy_part_2(input: &str) -> usize {
+    let mut val: Option<Rc<Cell<usize>>> = None;
+    let mut number_vec: Vec<Option<Rc<Cell<usize>>>> = vec![None; INPUT_SIZE];
+
+    let _ = input.as_bytes().iter().enumerate().map(|(i, c)| match c {
+        b'0'..=b'9' => {
+            if let Some(val) = &val {
+                val.replace(val.get() * 10 + (c - b'0') as usize);
+            } else {
+                val = Some(Rc::new(Cell::new((c - b'0') as usize)));
+            }
+
+            number_vec[i] = Some(Rc::clone(val.as_ref().unwrap()));
+        }
+        _ => {
+            val = None;
+        }
+    });
+
     input
         .as_bytes()
         .iter()
@@ -182,168 +200,200 @@ fn speedy_part_2(input: &str) -> usize {
                 && i % LINE_WIDTH != LINE_WIDTH - 1
         })
         .map(|(i, c)| match c {
-            b'*' => handle_star(input.as_bytes(), i),
+            b'*' => {
+                let mut found: [Option<&Rc<Cell<usize>>>; 2] = [None, None];
+
+                for side in [
+                    &number_vec[i - LINE_WIDTH - 1],
+                    &number_vec[i - LINE_WIDTH],
+                    &number_vec[i - LINE_WIDTH + 1],
+                    &number_vec[i - 1],
+                    &number_vec[i + 1],
+                    &number_vec[i + LINE_WIDTH - 1],
+                    &number_vec[i + LINE_WIDTH],
+                    &number_vec[i + LINE_WIDTH + 1],
+                ] {
+                    let side = match side {
+                        Some(side) => side,
+                        None => continue,
+                    };
+
+                    match found {
+                        [None, None] => {
+                            found[0] = Some(side);
+                        }
+                        [Some(c), None] if c != side => {
+                            found[1] = Some(side);
+                        }
+                        [Some(c1), Some(c2)] if c1 != side && c2 != side && c1 != c2 => {
+                            return 0;
+                        }
+                        _ => {}
+                    }
+                }
+
+                found[0].map(|f| f.get()).unwrap_or(0) * found[1].map(|f| f.get()).unwrap_or(0)
+            }
             _ => 0,
         })
         .sum()
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum Search {
-    TopLeftUnbound,
-    TopLeftPartial,
-    TopMiddle,
-    TopFull,
-    TopRightPartial,
-    TopRightUnbound,
-    RightUnbound,
-    BottomRightUnbound,
-    BottomRightPartial,
-    BottomMiddle,
-    BottomFull,
-    BottomLeftPartial,
-    BottomLeftUnbound,
-    LeftUnbound,
-}
+// #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+// enum Search {
+//     TopLeftUnbound,
+//     TopLeftPartial,
+//     TopMiddle,
+//     TopFull,
+//     TopRightPartial,
+//     TopRightUnbound,
+//     RightUnbound,
+//     BottomRightUnbound,
+//     BottomRightPartial,
+//     BottomMiddle,
+//     BottomFull,
+//     BottomLeftPartial,
+//     BottomLeftUnbound,
+//     LeftUnbound,
+// }
 
-fn handle_star(input: &[u8], i: usize) -> usize {
-    let mut first = None;
-    let mut second = None;
+// fn handle_star(input: &[u8], i: usize) -> usize {
+//     let mut first = None;
+//     let mut second = None;
 
-    macro_rules! assign_or_return_0 {
-        ($first:ident, $second:ident, $val:expr) => {
-            if matches!($first, None) {
-                $first = Some($val);
-            } else if matches!($second, None) {
-                $second = Some($val);
-            } else {
-                return 0;
-            }
-        };
-    }
+//     macro_rules! assign_or_return_0 {
+//         ($first:ident, $second:ident, $val:expr) => {
+//             if matches!($first, None) {
+//                 $first = Some($val);
+//             } else if matches!($second, None) {
+//                 $second = Some($val);
+//             } else {
+//                 return 0;
+//             }
+//         };
+//     }
 
-    fn read_precise(input: &[u8], start: usize, end: usize) -> usize {
-        match &input[start..=end] {
-            [h @ b'0'..=b'9', t @ b'0'..=b'9', o @ b'0'..=b'9'] => {
-                (h - b'0') as usize * 100 + (t - b'0') as usize * 10 + (o - b'0') as usize
-            }
-            [t @ b'0'..=b'9', o @ b'0'..=b'9']
-            | [_, t @ b'0'..=b'9', o @ b'0'..=b'9']
-            | [t @ b'0'..=b'9', o @ b'0'..=b'9', _] => {
-                (t - b'0') as usize * 10 + (o - b'0') as usize
-            }
-            [_, _, o @ b'0'..=b'9']
-            | [_, o @ b'0'..=b'9', _]
-            | [o @ b'0'..=b'9', _, _]
-            | [_, o @ b'0'..=b'9']
-            | [o @ b'0'..=b'9', _]
-            | [o @ b'0'..=b'9'] => (o - b'0') as usize,
-            _ => unreachable!(),
-        }
-    }
+//     fn read_precise(input: &[u8], start: usize, end: usize) -> usize {
+//         match &input[start..=end] {
+//             [h @ b'0'..=b'9', t @ b'0'..=b'9', o @ b'0'..=b'9'] => {
+//                 (h - b'0') as usize * 100 + (t - b'0') as usize * 10 + (o - b'0') as usize
+//             }
+//             [t @ b'0'..=b'9', o @ b'0'..=b'9']
+//             | [_, t @ b'0'..=b'9', o @ b'0'..=b'9']
+//             | [t @ b'0'..=b'9', o @ b'0'..=b'9', _] => {
+//                 (t - b'0') as usize * 10 + (o - b'0') as usize
+//             }
+//             [_, _, o @ b'0'..=b'9']
+//             | [_, o @ b'0'..=b'9', _]
+//             | [o @ b'0'..=b'9', _, _]
+//             | [_, o @ b'0'..=b'9']
+//             | [o @ b'0'..=b'9', _]
+//             | [o @ b'0'..=b'9'] => (o - b'0') as usize,
+//             _ => unreachable!(),
+//         }
+//     }
 
-    fn parse(input: &[u8], i: usize, search_location: Search) -> usize {
-        let (left, right) = match search_location {
-            Search::BottomFull => (i + LINE_WIDTH - 1, i + LINE_WIDTH + 1),
-            Search::BottomLeftPartial => (i + LINE_WIDTH - 2, i + LINE_WIDTH),
-            Search::BottomLeftUnbound => (i + LINE_WIDTH - 3, i + LINE_WIDTH - 1),
-            Search::BottomMiddle => (i + LINE_WIDTH, i + LINE_WIDTH),
-            Search::BottomRightPartial => (i + LINE_WIDTH, i + LINE_WIDTH + 2),
-            Search::BottomRightUnbound => (i + LINE_WIDTH + 1, i + LINE_WIDTH + 3),
-            Search::LeftUnbound => (i - 3, i - 1),
-            Search::RightUnbound => (i + 1, i + 3),
-            Search::TopFull => (i - LINE_WIDTH - 1, i - LINE_WIDTH + 1),
-            Search::TopLeftPartial => (i - LINE_WIDTH - 2, i - LINE_WIDTH),
-            Search::TopLeftUnbound => (i - LINE_WIDTH - 3, i - LINE_WIDTH - 1),
-            Search::TopMiddle => (i - LINE_WIDTH, i - LINE_WIDTH),
-            Search::TopRightPartial => (i - LINE_WIDTH, i - LINE_WIDTH + 2),
-            Search::TopRightUnbound => (i - LINE_WIDTH + 1, i - LINE_WIDTH + 3),
-            _ => unreachable!(),
-        };
+//     fn parse(input: &[u8], i: usize, search_location: Search) -> usize {
+//         let (left, right) = match search_location {
+//             Search::BottomFull => (i + LINE_WIDTH - 1, i + LINE_WIDTH + 1),
+//             Search::BottomLeftPartial => (i + LINE_WIDTH - 2, i + LINE_WIDTH),
+//             Search::BottomLeftUnbound => (i + LINE_WIDTH - 3, i + LINE_WIDTH - 1),
+//             Search::BottomMiddle => (i + LINE_WIDTH, i + LINE_WIDTH),
+//             Search::BottomRightPartial => (i + LINE_WIDTH, i + LINE_WIDTH + 2),
+//             Search::BottomRightUnbound => (i + LINE_WIDTH + 1, i + LINE_WIDTH + 3),
+//             Search::LeftUnbound => (i - 3, i - 1),
+//             Search::RightUnbound => (i + 1, i + 3),
+//             Search::TopFull => (i - LINE_WIDTH - 1, i - LINE_WIDTH + 1),
+//             Search::TopLeftPartial => (i - LINE_WIDTH - 2, i - LINE_WIDTH),
+//             Search::TopLeftUnbound => (i - LINE_WIDTH - 3, i - LINE_WIDTH - 1),
+//             Search::TopMiddle => (i - LINE_WIDTH, i - LINE_WIDTH),
+//             Search::TopRightPartial => (i - LINE_WIDTH, i - LINE_WIDTH + 2),
+//             Search::TopRightUnbound => (i - LINE_WIDTH + 1, i - LINE_WIDTH + 3),
+//         };
 
-        read_precise(input, left, right)
-    }
+//         read_precise(input, left, right)
+//     }
 
-    match [
-        input[i - LINE_WIDTH - 1],
-        input[i - LINE_WIDTH],
-        input[i - LINE_WIDTH + 1],
-    ] {
-        [b'0'..=b'9', b'0'..=b'9', b'0'..=b'9'] => {
-            assign_or_return_0!(first, second, Search::TopFull);
-        }
-        [b'0'..=b'9', _, b'0'..=b'9'] => {
-            assign_or_return_0!(first, second, Search::TopLeftUnbound);
-            assign_or_return_0!(first, second, Search::TopRightUnbound);
-        }
-        [b'0'..=b'9', b'0'..=b'9', _] => {
-            assign_or_return_0!(first, second, Search::TopLeftPartial);
-        }
-        [_, b'0'..=b'9', b'0'..=b'9'] => {
-            assign_or_return_0!(first, second, Search::TopRightPartial);
-        }
-        [b'0'..=b'9', _, _] => {
-            assign_or_return_0!(first, second, Search::TopLeftUnbound);
-        }
-        [_, b'0'..=b'9', _] => {
-            assign_or_return_0!(first, second, Search::TopMiddle);
-        }
-        [_, _, b'0'..=b'9'] => {
-            assign_or_return_0!(first, second, Search::TopRightUnbound);
-        }
-        _ => {}
-    }
+//     match [
+//         input[i - LINE_WIDTH - 1],
+//         input[i - LINE_WIDTH],
+//         input[i - LINE_WIDTH + 1],
+//     ] {
+//         [b'0'..=b'9', b'0'..=b'9', b'0'..=b'9'] => {
+//             assign_or_return_0!(first, second, Search::TopFull);
+//         }
+//         [b'0'..=b'9', _, b'0'..=b'9'] => {
+//             assign_or_return_0!(first, second, Search::TopLeftUnbound);
+//             assign_or_return_0!(first, second, Search::TopRightUnbound);
+//         }
+//         [b'0'..=b'9', b'0'..=b'9', _] => {
+//             assign_or_return_0!(first, second, Search::TopLeftPartial);
+//         }
+//         [_, b'0'..=b'9', b'0'..=b'9'] => {
+//             assign_or_return_0!(first, second, Search::TopRightPartial);
+//         }
+//         [b'0'..=b'9', _, _] => {
+//             assign_or_return_0!(first, second, Search::TopLeftUnbound);
+//         }
+//         [_, b'0'..=b'9', _] => {
+//             assign_or_return_0!(first, second, Search::TopMiddle);
+//         }
+//         [_, _, b'0'..=b'9'] => {
+//             assign_or_return_0!(first, second, Search::TopRightUnbound);
+//         }
+//         _ => {}
+//     }
 
-    match input[i - 1] {
-        b'0'..=b'9' => {
-            assign_or_return_0!(first, second, Search::LeftUnbound);
-        }
-        _ => {}
-    }
+//     match input[i - 1] {
+//         b'0'..=b'9' => {
+//             assign_or_return_0!(first, second, Search::LeftUnbound);
+//         }
+//         _ => {}
+//     }
 
-    match input[i + 1] {
-        b'0'..=b'9' => {
-            assign_or_return_0!(first, second, Search::RightUnbound);
-        }
-        _ => {}
-    }
+//     match input[i + 1] {
+//         b'0'..=b'9' => {
+//             assign_or_return_0!(first, second, Search::RightUnbound);
+//         }
+//         _ => {}
+//     }
 
-    match [
-        input[i + LINE_WIDTH - 1],
-        input[i + LINE_WIDTH],
-        input[i + LINE_WIDTH + 1],
-    ] {
-        [b'0'..=b'9', b'0'..=b'9', b'0'..=b'9'] => {
-            assign_or_return_0!(first, second, Search::BottomFull);
-        }
-        [b'0'..=b'9', _, b'0'..=b'9'] => {
-            assign_or_return_0!(first, second, Search::BottomLeftUnbound);
-            assign_or_return_0!(first, second, Search::BottomRightUnbound);
-        }
-        [b'0'..=b'9', b'0'..=b'9', _] => {
-            assign_or_return_0!(first, second, Search::BottomLeftPartial);
-        }
-        [_, b'0'..=b'9', b'0'..=b'9'] => {
-            assign_or_return_0!(first, second, Search::BottomRightPartial);
-        }
-        [b'0'..=b'9', _, _] => {
-            assign_or_return_0!(first, second, Search::BottomLeftUnbound);
-        }
-        [_, b'0'..=b'9', _] => {
-            assign_or_return_0!(first, second, Search::BottomMiddle);
-        }
-        [_, _, b'0'..=b'9'] => {
-            assign_or_return_0!(first, second, Search::BottomRightUnbound);
-        }
-        _ => {}
-    }
+//     match [
+//         input[i + LINE_WIDTH - 1],
+//         input[i + LINE_WIDTH],
+//         input[i + LINE_WIDTH + 1],
+//     ] {
+//         [b'0'..=b'9', b'0'..=b'9', b'0'..=b'9'] => {
+//             assign_or_return_0!(first, second, Search::BottomFull);
+//         }
+//         [b'0'..=b'9', _, b'0'..=b'9'] => {
+//             assign_or_return_0!(first, second, Search::BottomLeftUnbound);
+//             assign_or_return_0!(first, second, Search::BottomRightUnbound);
+//         }
+//         [b'0'..=b'9', b'0'..=b'9', _] => {
+//             assign_or_return_0!(first, second, Search::BottomLeftPartial);
+//         }
+//         [_, b'0'..=b'9', b'0'..=b'9'] => {
+//             assign_or_return_0!(first, second, Search::BottomRightPartial);
+//         }
+//         [b'0'..=b'9', _, _] => {
+//             assign_or_return_0!(first, second, Search::BottomLeftUnbound);
+//         }
+//         [_, b'0'..=b'9', _] => {
+//             assign_or_return_0!(first, second, Search::BottomMiddle);
+//         }
+//         [_, _, b'0'..=b'9'] => {
+//             assign_or_return_0!(first, second, Search::BottomRightUnbound);
+//         }
+//         _ => {}
+//     }
 
-    if first == None || second == None {
-        return 0;
-    }
+//     if first == None || second == None {
+//         return 0;
+//     }
 
-    parse(input, i, first.unwrap()) * parse(input, i, second.unwrap())
-}
+//     parse(input, i, first.unwrap()) * parse(input, i, second.unwrap())
+// }
 
 // This was the old version, marginally slower.
 // fn speedy_part_2(input: &str) -> usize {
@@ -454,7 +504,8 @@ fn test_part2() {
 
 #[test]
 fn test_speedy_part_2() {
-    let test = r#"467..114..
+    let test = r#"
+467..114..
 ...*......
 ..35..633.
 ......#...
@@ -464,5 +515,5 @@ fn test_speedy_part_2() {
 ......755.
 ...$...*..
 .664...598"#;
-    assert_eq!(speedy_part_2(test), 467835);
+    assert_eq!(speedy_part_2(test.trim()), 467835);
 }
