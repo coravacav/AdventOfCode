@@ -1,4 +1,4 @@
-#![allow(unused)]
+#[allow(unused_imports)]
 use rust_aoc_lib::*;
 
 fn main() {
@@ -17,10 +17,6 @@ fn main() {
     // simple_benchmark!(part2, input);
     // simple_benchmark!(speedy_part_2, input);
 }
-
-const MAX_RED: usize = 12;
-const MAX_GREEN: usize = 13;
-const MAX_BLUE: usize = 14;
 
 fn part1(input: &str) -> usize {
     0
