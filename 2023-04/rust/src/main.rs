@@ -87,15 +87,11 @@ fn part2(input: &str) -> usize {
 
                 total += copies;
 
-                if x == 0 {
-                    (copy_tracker, total)
-                } else {
-                    for i in 0..x {
-                        copy_tracker[i] += copies;
-                    }
-
-                    (copy_tracker, total)
+                for i in 0..x {
+                    copy_tracker[i] += copies;
                 }
+
+                (copy_tracker, total)
             },
         )
         .1
