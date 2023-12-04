@@ -1,6 +1,5 @@
 use std::collections::{HashSet, VecDeque};
 
-use itertools::Itertools;
 #[allow(unused_imports)]
 use rust_aoc_lib::*;
 
@@ -53,7 +52,7 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    let res = input
+    input
         .lines()
         .map(|line| {
             let (_, line) = line.split_once(":").unwrap();
@@ -72,26 +71,20 @@ fn part2(input: &str) -> usize {
                 .filter_map(|x| if cards.contains(&x) { Some(x) } else { None })
                 .count()
         })
-        .collect_vec();
-
-    let mut c = VecDeque::new();
-    for _ in 0..res.len() {
-        c.push_back(1);
-    }
-
-    res.iter()
         .fold(
-            (c, 0),
-            |(mut copy_tracker, mut total): (VecDeque<usize>, usize), &x| {
+            (VecDeque::new(), 0),
+            |(mut copy_tracker, total): (VecDeque<usize>, usize), x| {
                 let copies = copy_tracker.pop_front().unwrap_or(1);
 
-                total += copies;
-
                 for i in 0..x {
-                    copy_tracker[i] += copies;
+                    if let Some(val) = copy_tracker.get_mut(i) {
+                        *val += copies;
+                    } else {
+                        copy_tracker.push_back(copies + 1);
+                    }
                 }
 
-                (copy_tracker, total)
+                (copy_tracker, total + copies)
             },
         )
         .1
