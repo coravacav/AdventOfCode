@@ -21,7 +21,7 @@ fn main() {
 }
 
 fn part1(input: &str) -> usize {
-    let mut cards = HashSet::new();
+    let mut cards = Vec::new();
     input
         .lines()
         .map(|line| line.split_once(":").unwrap().1)
@@ -32,7 +32,7 @@ fn part1(input: &str) -> usize {
                 .split_ascii_whitespace()
                 .map(|win| win.parse::<usize>().unwrap())
                 .for_each(|card| {
-                    cards.insert(card);
+                    cards.push(card);
                 });
 
             ours.split_ascii_whitespace().fold(0, |acc, our| {
@@ -52,7 +52,7 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    let mut cards = HashSet::new();
+    let mut cards = Vec::new();
     input
         .lines()
         .map(|line| line.split_once(":").unwrap().1)
@@ -61,7 +61,7 @@ fn part2(input: &str) -> usize {
             cards.clear();
             for win in winners.split_whitespace() {
                 let win = win.parse::<usize>().unwrap();
-                cards.insert(win);
+                cards.push(win);
             }
 
             ours.split_whitespace()
