@@ -1,4 +1,4 @@
-use std::collections::{vec_deque, HashSet, VecDeque};
+use std::collections::{HashSet, VecDeque};
 
 use itertools::Itertools;
 #[allow(unused_imports)]
@@ -119,7 +119,7 @@ fn speedy_part_1(input: &str) -> usize {
                 i = 0;
             }
             b'\n' => {
-                target[i] = val as u8;
+                target[i] = val;
 
                 let mut points = 0;
 
@@ -142,8 +142,7 @@ fn speedy_part_1(input: &str) -> usize {
                 target = &mut ans;
             }
             b'0'..=b'9' => {
-                val *= 10;
-                val += (c - b'0') as usize;
+                val = val * 10 + (c - b'0');
             }
             b' ' => {
                 if val > 0 {
