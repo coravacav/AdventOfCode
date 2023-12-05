@@ -227,7 +227,7 @@ pub fn combine_maps(a_to_b: &[Range], b_to_c: &[Range]) -> Vec<Range> {
 
     fn check_interactions(
         a_to_c: &mut Vec<Range>,
-        range_type: RangeType,
+        to_src_type: RangeType,
         from: &[Range],
         to: &[Range],
     ) {
@@ -235,11 +235,11 @@ pub fn combine_maps(a_to_b: &[Range], b_to_c: &[Range]) -> Vec<Range> {
             for to in to {
                 // if output completely contained in input or vice versa
                 if from
-                    .get_range(!range_type)
-                    .contains(&to.get_min(range_type))
+                    .get_range(!to_src_type)
+                    .contains(&to.get_min(to_src_type))
                     && from
-                        .get_range(!range_type)
-                        .contains(&to.get_max(range_type))
+                        .get_range(!to_src_type)
+                        .contains(&to.get_max(to_src_type))
                 {
                     // This should result in 3 new ranges
 
@@ -255,8 +255,8 @@ pub fn combine_maps(a_to_b: &[Range], b_to_c: &[Range]) -> Vec<Range> {
                     // 4 .. 5 -> 9 .. 10
                     // AKA 4 -> 9
                 } else if from
-                    .get_range(!range_type)
-                    .contains(&to.get_min(range_type))
+                    .get_range(!to_src_type)
+                    .contains(&to.get_min(to_src_type))
                 {
                     // This should result in 2 new ranges
 
@@ -269,8 +269,8 @@ pub fn combine_maps(a_to_b: &[Range], b_to_c: &[Range]) -> Vec<Range> {
                     // 2 .. 5 -> 17 .. 20
                     // AKA 2 -> 17, 3 -> 18, 4 -> 19
                 } else if from
-                    .get_range(!range_type)
-                    .contains(&to.get_max(range_type))
+                    .get_range(!to_src_type)
+                    .contains(&to.get_max(to_src_type))
                 {
                     // This should result in 2 new ranges
 
@@ -282,6 +282,12 @@ pub fn combine_maps(a_to_b: &[Range], b_to_c: &[Range]) -> Vec<Range> {
                     // and
                     // 0 .. 4 -> 3 .. 7
                     // AKA 0 -> 3, 1 -> 4, 2 -> 5, 3 -> 6
+
+                    a_to_c.push(Range::new(
+                        from.get_max(to_src_type),
+                        to.get_min(to_src_type),
+                        to.get_min(to_src_type) - from.get_min(to_src_type),
+                    ));
                 } else {
                     a_to_c.push(*from);
                 }
@@ -290,7 +296,10 @@ pub fn combine_maps(a_to_b: &[Range], b_to_c: &[Range]) -> Vec<Range> {
     }
 
     check_interactions(&mut a_to_c, RangeType::Src, a_to_b, b_to_c);
-    check_interactions(&mut a_to_c, RangeType::Dst, b_to_c, a_to_b);
+    // this one might actually need different logic
+    // this is due to the case where the 3 .. 6 is partially covered like 4 .. 6
+    // so therefore it should only froward 3 .. 4, but current implementation would forward 4 .. 6 differently I think.
+    // check_interactions(&mut a_to_c, RangeType::Dst, b_to_c, a_to_b);
 
     a_to_c
 }
