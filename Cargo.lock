@@ -186,6 +186,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "solution-2023-05"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "rayon",
+ "rust-aoc-lib",
+]
+
+[[package]]
 name = "solution-rust"
 version = "0.1.0"
 dependencies = [

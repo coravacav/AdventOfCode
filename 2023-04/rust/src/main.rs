@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 #[allow(unused_imports)]
 use rust_aoc_lib::*;
