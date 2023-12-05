@@ -185,6 +185,18 @@ impl std::ops::Not for RangeType {
     }
 }
 
+impl Ord for Range {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.src.cmp(&other.src)
+    }
+}
+
+impl PartialOrd for Range {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.src.cmp(&other.src))
+    }
+}
+
 impl Range {
     /// Notably this is a different order than the text input
     pub fn new(src: usize, dst: usize, range: usize) -> Self {
@@ -221,85 +233,91 @@ impl Range {
     }
 }
 
+fn range_parse_line(line: &str) -> Range {
+    let mut parts = line.split_whitespace();
+    let a = parts.next().unwrap().parse::<usize>().unwrap();
+    let b = parts.next().unwrap().parse::<usize>().unwrap();
+    let c = parts.next().unwrap().parse::<usize>().unwrap();
+    Range::new(b, a, c)
+}
+
+fn range_read_till_empty_line(lines: &mut Lines) -> Vec<Range> {
+    let mut result = Vec::new();
+    while let Some(line) = lines.next() {
+        if line.is_empty() {
+            lines.next(); // We know that the next one must be a label, we don't actually need it
+            break;
+        }
+        result.push(range_parse_line(line));
+    }
+    result
+}
+
 pub fn combine_maps(a_to_b: &[Range], b_to_c: &[Range]) -> Vec<Range> {
     let mut a_to_c = Vec::new();
-    // let mut partial_applications = Vec::new();
 
-    fn check_interactions(
-        a_to_c: &mut Vec<Range>,
-        to_src_type: RangeType,
-        from: &[Range],
-        to: &[Range],
-    ) {
-        for from in from {
-            for to in to {
-                // if output completely contained in input or vice versa
-                if from
-                    .get_range(!to_src_type)
-                    .contains(&to.get_min(to_src_type))
-                    && from
-                        .get_range(!to_src_type)
-                        .contains(&to.get_max(to_src_type))
-                {
-                    // This should result in 3 new ranges
+    for from in a_to_b {
+        for to in b_to_c {
+            // if output completely contained in input or vice versa
+            if from
+                .get_range(RangeType::Dst)
+                .contains(&to.get_min(RangeType::Src))
+                && from
+                    .get_range(RangeType::Dst)
+                    .contains(&to.get_max(RangeType::Src))
+            {
+                // This should result in 3 new ranges
 
-                    // 0 .. 5 -> 5 .. 10
-                    //           6 .. 9  -> 11 .. 14
-                    // Results in
-                    // 0 .. 1 -> 5 .. 6
-                    // AKA 0 -> 5
-                    // and
-                    // 1 .. 4 -> 11 .. 14
-                    // AKA 1 -> 11, 2 -> 12, 3 -> 13
-                    // and
-                    // 4 .. 5 -> 9 .. 10
-                    // AKA 4 -> 9
-                } else if from
-                    .get_range(!to_src_type)
-                    .contains(&to.get_min(to_src_type))
-                {
-                    // This should result in 2 new ranges
+                // 0 .. 5 -> 5 .. 10
+                //           6 .. 9  -> 11 .. 14
+                // Results in
+                // 0 .. 1 -> 5 .. 6
+                // AKA 0 -> 5
+                // and
+                // 1 .. 4 -> 11 .. 14
+                // AKA 1 -> 11, 2 -> 12, 3 -> 13
+                // and
+                // 4 .. 5 -> 9 .. 10
+                // AKA 4 -> 9
+            } else if from
+                .get_range(RangeType::Dst)
+                .contains(&to.get_min(RangeType::Src))
+            {
+                // This should result in 2 new ranges
 
-                    // 0 .. 5 -> 5 .. 10
-                    //           7 .. 12  -> 17 .. 22
-                    // Results in
-                    // 0 .. 2 -> 5 .. 7
-                    // AKA 0 -> 5, 1 -> 6
-                    // and
-                    // 2 .. 5 -> 17 .. 20
-                    // AKA 2 -> 17, 3 -> 18, 4 -> 19
-                } else if from
-                    .get_range(!to_src_type)
-                    .contains(&to.get_max(to_src_type))
-                {
-                    // This should result in 2 new ranges
+                // 0 .. 5 -> 5 .. 10
+                //           7 .. 12  -> 17 .. 22
+                // Results in
+                // 0 .. 2 -> 5 .. 7
+                // AKA 0 -> 5, 1 -> 6
+                // and
+                // 2 .. 5 -> 17 .. 20
+                // AKA 2 -> 17, 3 -> 18, 4 -> 19
+            } else if from
+                .get_range(RangeType::Dst)
+                .contains(&to.get_max(RangeType::Src))
+            {
+                // This should result in 2 new ranges
 
-                    // 0 .. 5 -> 5 .. 10
-                    //           3 .. 9  -> 1 .. 7
-                    // Results in
-                    // 4 .. 5 -> 9 .. 10
-                    // AKA 4 -> 9, 5 -> 10
-                    // and
-                    // 0 .. 4 -> 3 .. 7
-                    // AKA 0 -> 3, 1 -> 4, 2 -> 5, 3 -> 6
+                // 0 .. 5 -> 5 .. 10
+                //           3 .. 9  -> 1 .. 7
+                // Results in
+                // 4 .. 5 -> 9 .. 10
+                // AKA 4 -> 9, 5 -> 10
+                // and
+                // 0 .. 4 -> 3 .. 7
+                // AKA 0 -> 3, 1 -> 4, 2 -> 5, 3 -> 6
 
-                    a_to_c.push(Range::new(
-                        from.get_max(to_src_type),
-                        to.get_min(to_src_type),
-                        to.get_min(to_src_type) - from.get_min(to_src_type),
-                    ));
-                } else {
-                    a_to_c.push(*from);
-                }
+                a_to_c.push(Range::new(
+                    from.get_max(RangeType::Src),
+                    to.get_min(RangeType::Src),
+                    to.get_min(RangeType::Src) - from.get_min(RangeType::Src),
+                ));
+            } else {
+                a_to_c.push(*from);
             }
         }
     }
-
-    check_interactions(&mut a_to_c, RangeType::Src, a_to_b, b_to_c);
-    // this one might actually need different logic
-    // this is due to the case where the 3 .. 6 is partially covered like 4 .. 6
-    // so therefore it should only froward 3 .. 4, but current implementation would forward 4 .. 6 differently I think.
-    // check_interactions(&mut a_to_c, RangeType::Dst, b_to_c, a_to_b);
 
     a_to_c
 }
@@ -342,7 +360,7 @@ fn speedy_part_2(input: &str) -> usize {
     let mut lines = input.lines();
     // seeds now map to ranges
 
-    let seeds = lines
+    let mut seeds = lines
         .next()
         .unwrap()
         .split_once(": ")
@@ -352,53 +370,21 @@ fn speedy_part_2(input: &str) -> usize {
         .map(|s| s.parse::<usize>().unwrap())
         .chunks(2)
         .into_iter()
-        .map(|mut c| (c.next().unwrap(), c.next().unwrap()))
+        .map(|mut c| {
+            let src_and_dst = c.next().unwrap();
+            Range::new(src_and_dst, src_and_dst, c.next().unwrap())
+        })
         .collect_vec();
 
     // After the initial list, we have a blank line and a label, we don't need either
     lines.next();
     lines.next();
 
-    let seed_to_soil = read_till_empty_line(&mut lines);
-    let soil_to_fertilizer = read_till_empty_line(&mut lines);
-    let fertilizer_to_water = read_till_empty_line(&mut lines);
-    let water_to_light = read_till_empty_line(&mut lines);
-    let light_to_temperature = read_till_empty_line(&mut lines);
-    let temperature_to_humidity = read_till_empty_line(&mut lines);
-    let humidity_to_location = read_till_empty_line(&mut lines);
+    for _ in 0..7 {
+        seeds = combine_maps(&seeds, &range_read_till_empty_line(&mut lines));
+    }
 
-    // Follow all vec values through the maps and see where they end up
-    // If result / range not in vec, then it's the same as the input
-
-    seeds
-        .par_iter()
-        .flat_map(|&(start, c)| start..start + c)
-        .map(|seed| {
-            let mut seed = seed;
-            for mapping in [
-                &seed_to_soil,
-                &soil_to_fertilizer,
-                &fertilizer_to_water,
-                &water_to_light,
-                &light_to_temperature,
-                &temperature_to_humidity,
-                &humidity_to_location,
-            ] {
-                let mut location = None;
-                for (dst, src, range) in mapping.iter() {
-                    if (*src..src + range).contains(&seed) {
-                        location = Some(dst + seed - src);
-                        break;
-                    }
-                }
-                if let Some(location) = location {
-                    seed = location;
-                }
-            }
-            seed
-        })
-        .min()
-        .unwrap()
+    seeds.into_iter().min().unwrap().src
 }
 
 #[test]
