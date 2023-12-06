@@ -4,7 +4,7 @@ macro_rules! simple_benchmark {
         let stringified = stringify!($name);
         let now = std::time::Instant::now();
         for _ in 0..$iterations {
-            $name(&$input);
+            $name(std::hint::black_box(&$input));
         }
         println!("{stringified}: {:?}", now.elapsed() / $iterations);
     }};
