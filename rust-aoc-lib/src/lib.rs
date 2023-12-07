@@ -41,8 +41,11 @@ impl PartImplementation {
 
         iterations = (Duration::from_secs(3).as_nanos() / elapsed.as_nanos()) as u32;
 
-        // Floor iterations to the nearest power of 10
-        iterations = 10_u32.pow((iterations as f32).log10().floor() as u32);
+        if iterations > 1000 {
+            iterations = 10_u32.pow((iterations as f32).log10().ceil() as u32);
+        } else {
+            iterations = 10_u32.pow((iterations as f32).log10().floor() as u32);
+        }
 
         println!(
             "{}",
