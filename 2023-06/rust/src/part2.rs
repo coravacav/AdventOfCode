@@ -50,7 +50,7 @@ fn using_quadratic_formula(input: &str) -> usize {
             .iter()
             .filter(|b| b.is_ascii_digit())
             .map(|b| (b - b'0') as usize)
-            .fold(0usize, |acc, new| acc * 10 + new) as f64
+            .fold(0, |acc, new| acc * 10 + new) as f64
     });
 
     let (first, last) = quadratic_formula(input.next().unwrap(), input.next().unwrap());
