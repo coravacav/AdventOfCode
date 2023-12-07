@@ -11,7 +11,7 @@ fn part2(input: &str) -> usize {
                 .map(|input| {
                     input
                         .split(", ")
-                        .map(|item| item.split_once(" ").unwrap())
+                        .map(|item| item.split_once(' ').unwrap())
                         .map(|(count, color)| (count.parse::<usize>().unwrap(), color))
                         .map(|(count, color)| match color {
                             "red" => (count, 1, 1),

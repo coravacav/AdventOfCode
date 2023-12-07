@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use rust_aoc_lib::{part2, read_number};
+use rust_aoc_lib::part2;
 
 use crate::quadratic_formula;
 
@@ -69,11 +69,8 @@ fn using_quadratic_formula(input: &str) -> usize {
         let mut val = 0;
 
         while let [c, rest @ ..] = input {
-            match c {
-                c @ b'0'..=b'9' => {
-                    val = val * 10 + (c - b'0') as usize;
-                }
-                _ => {}
+            if let c @ b'0'..=b'9' = c {
+                val = val * 10 + (c - b'0') as usize;
             }
 
             input = rest;

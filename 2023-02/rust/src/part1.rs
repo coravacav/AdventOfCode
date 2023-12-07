@@ -15,7 +15,7 @@ fn part1(input: &str) -> usize {
                 .map(|input| {
                     input
                         .split(", ")
-                        .map(|item| item.split_once(" ").unwrap())
+                        .map(|item| item.split_once(' ').unwrap())
                         .map(|(count, color)| (count.parse::<usize>().unwrap(), color))
                         .map(|(count, color)| match color {
                             "red" => count <= MAX_RED,
@@ -52,7 +52,7 @@ fn speedy_part_1(input: &str) -> usize {
 
         let game_num = read_number!(iter);
 
-        while let Some(&c) = iter.next() {
+        for &c in iter.by_ref() {
             match c {
                 b'0'..=b'9' => {
                     incr_num!(val, c);

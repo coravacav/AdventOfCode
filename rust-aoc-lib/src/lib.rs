@@ -34,7 +34,7 @@ impl PartImplementation {
         let start = std::time::Instant::now();
 
         for _ in 0..iterations {
-            (self.fn_ptr)(std::hint::black_box(&input));
+            (self.fn_ptr)(std::hint::black_box(input));
         }
 
         let elapsed = start.elapsed();
@@ -55,7 +55,7 @@ impl PartImplementation {
         let now = std::time::Instant::now();
 
         for _ in 0..iterations {
-            (self.fn_ptr)(std::hint::black_box(&input));
+            (self.fn_ptr)(std::hint::black_box(input));
         }
 
         println!("{}: {:?}", self.name, now.elapsed() / iterations);

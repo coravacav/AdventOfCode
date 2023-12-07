@@ -5,7 +5,7 @@ fn part1(input: &str) -> usize {
     let mut cards = Vec::new();
     input
         .lines()
-        .map(|line| line.split_once(":").unwrap().1)
+        .map(|line| line.split_once(':').unwrap().1)
         .map(|line| line.split_once(" | ").unwrap())
         .map(|(winners, ours)| {
             cards.clear();
@@ -71,7 +71,7 @@ fn speedy_part_1(input: &str) -> usize {
             }
             b' ' => {
                 if val > 0 {
-                    target[i] = val as u8;
+                    target[i] = val;
                     i += 1;
                 }
 

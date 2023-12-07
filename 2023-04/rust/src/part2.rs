@@ -7,7 +7,7 @@ fn part2(input: &str) -> usize {
     let mut cards = Vec::new();
     input
         .lines()
-        .map(|line| line.split_once(":").unwrap().1)
+        .map(|line| line.split_once(':').unwrap().1)
         .map(|line| line.split_once(" | ").unwrap())
         .map(|(winners, ours)| {
             cards.clear();
@@ -18,7 +18,7 @@ fn part2(input: &str) -> usize {
 
             ours.split_whitespace()
                 .map(|x| x.parse::<usize>().unwrap())
-                .filter_map(|x| if cards.contains(&x) { Some(x) } else { None })
+                .filter(|x| cards.contains(x))
                 .count()
         })
         .fold(
