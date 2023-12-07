@@ -50,7 +50,7 @@ fn using_quadratic_formula(input: &str) -> usize {
     let time = {
         let mut val = 0;
 
-        while let [c, ..] = input {
+        while let [c, rest @ ..] = input {
             match c {
                 c @ b'0'..=b'9' => {
                     val = val * 10 + (c - b'0') as usize;
@@ -59,7 +59,7 @@ fn using_quadratic_formula(input: &str) -> usize {
                 _ => {}
             }
 
-            input = &input[1..];
+            input = rest;
         }
 
         val as f64
@@ -68,7 +68,7 @@ fn using_quadratic_formula(input: &str) -> usize {
     let distance = {
         let mut val = 0;
 
-        while let [c, ..] = input {
+        while let [c, rest @ ..] = input {
             match c {
                 c @ b'0'..=b'9' => {
                     val = val * 10 + (c - b'0') as usize;
@@ -76,7 +76,7 @@ fn using_quadratic_formula(input: &str) -> usize {
                 _ => {}
             }
 
-            input = &input[1..];
+            input = rest;
         }
 
         val as f64
