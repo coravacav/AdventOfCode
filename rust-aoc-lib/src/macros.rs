@@ -11,7 +11,7 @@ macro_rules! read_number {
         let mut val = 0;
 
         while let Some(&c @ b'0'..=b'9') = $iter.next() {
-            incr_num!(val, c);
+            rust_aoc_lib::incr_num!(val, c);
         }
 
         val

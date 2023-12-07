@@ -44,7 +44,10 @@ impl PartImplementation {
         // Floor iterations to the nearest power of 10
         iterations = 10_u32.pow((iterations as f32).log10().floor() as u32);
 
-        println!("running {} iterations", iterations);
+        println!(
+            "{}",
+            yansi::Paint::new(format!("running {} iterations", iterations)).dimmed()
+        );
 
         let now = std::time::Instant::now();
 
