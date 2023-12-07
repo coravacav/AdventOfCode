@@ -2,18 +2,6 @@
 
 fn main() {
     let input = include_str!("../input.txt");
-    let answer = part_two(input);
-
-    let now = std::time::Instant::now();
-    for _ in 0..1000 {
-        assert_eq!(part_two(input), answer);
-    }
-    println!("time: {:?}", now.elapsed() / 1000);
-    let now = std::time::Instant::now();
-    for _ in 0..1000 {
-        assert_eq!(part2(input), answer);
-    }
-    println!("time: {:?}", now.elapsed() / 1000);
 }
 
 macro_rules! check_and_break_start {
@@ -151,21 +139,4 @@ fn part_two(puzzle_input: &str) -> usize {
             (first_digit * 10) + second_digit
         })
         .sum()
-}
-
-#[test]
-fn test_part2() {
-    assert_eq!(
-        part2(
-            r#"
-two1nine
-eightwothree
-abcone2threexyz
-xtwone3four
-4nineeightseven2
-zoneight234
-7pqrstsixteen"#,
-        ),
-        281
-    );
 }

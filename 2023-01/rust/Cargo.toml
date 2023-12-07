@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+itertools = "0.12.0"
+linkme = "0.3.18"
+rust-aoc-lib = { path = "../../rust-aoc-lib" }
 lazy_static = "1.4.0"
 rayon = "1.8.0"
 regex = "1.10.2"

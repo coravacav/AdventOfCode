@@ -1,3 +1,8 @@
 [workspace]
-members = ["templates/rust-template", "rust-aoc-lib", "**/rust"]
+members = [
+    "templates/rust-template",
+    "rust-aoc-lib",
+    "rust-aoc-lib/proc-macros",
+    "**/rust",
+]
 resolver = "2"

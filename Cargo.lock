@@ -78,6 +78,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
+name = "linkme"
+version = "0.3.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1e6b0bb9ca88d3c5ae88240beb9683821f903b824ee8381ef9ab4e8522fbfa9"
+dependencies = [
+ "linkme-impl",
+]
+
+[[package]]
+name = "linkme-impl"
+version = "0.3.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3b3f61e557a617ec6ba36c79431e1f3b5e100d67cfbdb61ed6ef384298af016"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "memchr"
 version = "2.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -90,6 +110,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a634b1c61a95585bd15607c6ab0c4e5b226e695ff2800ba0cdccddf208c406c"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "proc-macro2"
+version = "1.0.70"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39278fbbf5fb4f646ce651690877f89d1c5811a3d4acb27700c1cb3cdb78fd3b"
+dependencies = [
+ "unicode-ident",
+]
+
+[[package]]
+name = "proc-macros"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "quote"
+version = "1.0.33"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
+dependencies = [
+ "proc-macro2",
 ]
 
 [[package]]
@@ -144,6 +190,11 @@ checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
 [[package]]
 name = "rust-aoc-lib"
 version = "0.1.0"
+dependencies = [
+ "itertools",
+ "linkme",
+ "proc-macros",
+]
 
 [[package]]
 name = "scopeguard"
@@ -155,9 +206,12 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 name = "solution-2023-01"
 version = "0.1.0"
 dependencies = [
+ "itertools",
  "lazy_static",
+ "linkme",
  "rayon",
  "regex",
+ "rust-aoc-lib",
  "tap",
 ]
 
@@ -165,6 +219,8 @@ dependencies = [
 name = "solution-2023-02"
 version = "0.1.0"
 dependencies = [
+ "itertools",
+ "linkme",
  "rust-aoc-lib",
 ]
 
@@ -173,6 +229,7 @@ name = "solution-2023-03"
 version = "0.1.0"
 dependencies = [
  "itertools",
+ "linkme",
  "rust-aoc-lib",
  "tap",
 ]
@@ -182,6 +239,7 @@ name = "solution-2023-04"
 version = "0.1.0"
 dependencies = [
  "itertools",
+ "linkme",
  "rust-aoc-lib",
 ]
 
@@ -190,7 +248,17 @@ name = "solution-2023-05"
 version = "0.1.0"
 dependencies = [
  "itertools",
+ "linkme",
  "rayon",
+ "rust-aoc-lib",
+]
+
+[[package]]
+name = "solution-2023-06"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "linkme",
  "rust-aoc-lib",
 ]
 
@@ -198,7 +266,20 @@ dependencies = [
 name = "solution-rust"
 version = "0.1.0"
 dependencies = [
+ "itertools",
+ "linkme",
  "rust-aoc-lib",
+]
+
+[[package]]
+name = "syn"
+version = "2.0.39"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23e78b90f2fcf45d3e842032ce32e3f2d1545ba6636271dcbf24fa306d87be7a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
 ]
 
 [[package]]
@@ -206,3 +287,9 @@ name = "tap"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
+
+[[package]]
+name = "unicode-ident"
+version = "1.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
