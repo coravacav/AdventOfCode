@@ -46,7 +46,6 @@ fn brute_force(input: &str) -> usize {
 #[part2]
 fn using_quadratic_formula(input: &str) -> usize {
     let mut input = input.as_bytes().split(|&b| b == b'\n').map(|input| {
-        dbg!(unsafe { std::str::from_utf8_unchecked(input) });
         input
             .iter()
             .filter(|b| b.is_ascii_digit())
