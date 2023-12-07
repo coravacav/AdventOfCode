@@ -45,6 +45,7 @@ fn brute_force(input: &str) -> usize {
 
 #[part2]
 fn using_quadratic_formula(input: &str) -> usize {
+    // Could do faster string parsing but I did it for B3nny
     let mut input = input.as_bytes().split(|&b| b == b'\n').map(|input| {
         input
             .iter()

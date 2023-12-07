@@ -8,6 +8,18 @@ pub enum PartNum {
     Part2,
 }
 
+pub struct IterationStats {
+    pub iterations: u128,
+    pub result: usize,
+}
+
+pub struct Stats<'a> {
+    pub name: &'a str,
+    pub part_num: PartNum,
+    pub iteration_stats: IterationStats,
+    pub implementation: &'a PartImplementation,
+}
+
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct PartImplementation {
     pub part_num: PartNum,
@@ -24,91 +36,138 @@ impl PartImplementation {
         }
     }
 
-    pub fn run(&self, input: &str) -> usize {
+    fn run(&self, input: &str) -> usize {
         (self.fn_ptr)(input)
     }
 
-    pub fn benchmark(&self, input: &str) {
-        let mut iterations = 1;
-
+    fn get_iterations(&self, input: &str) -> IterationStats {
         let start = std::time::Instant::now();
+        let result = self.run(std::hint::black_box(input));
 
-        for _ in 0..iterations {
-            (self.fn_ptr)(std::hint::black_box(input));
-        }
+        let iterations = Duration::from_secs(2).as_nanos() / start.elapsed().as_nanos();
 
-        let elapsed = start.elapsed();
+        let multiple_of_ten_below = 10u128.pow((iterations as f64).log10().floor() as u32 - 1);
 
-        iterations = (Duration::from_secs(3).as_nanos() / elapsed.as_nanos()) as u32;
-
-        if iterations > 1000 {
-            iterations = 10_u32.pow((iterations as f32).log10().ceil() as u32);
+        // round iterations to the nearest multiple of 10 below
+        let iterations = if iterations > 1000 {
+            iterations - iterations % multiple_of_ten_below + multiple_of_ten_below
         } else {
-            iterations = 10_u32.pow((iterations as f32).log10().floor() as u32);
+            multiple_of_ten_below
+        };
+
+        IterationStats { iterations, result }
+    }
+
+    pub fn get_stats(&self, input: &str) -> Stats {
+        Stats {
+            name: self.name,
+            part_num: self.part_num,
+            iteration_stats: self.get_iterations(input),
+            implementation: self,
         }
+    }
 
-        println!(
-            "{}",
-            yansi::Paint::new(format!("running {} iterations", iterations)).dimmed()
-        );
-
+    pub fn benchmark(&self, input: &str, iterations: u128) -> Duration {
         let now = std::time::Instant::now();
 
         for _ in 0..iterations {
-            (self.fn_ptr)(std::hint::black_box(input));
+            self.run(std::hint::black_box(input));
         }
 
-        println!("{}: {:?}", self.name, now.elapsed() / iterations);
-    }
+        let now = now.elapsed();
 
-    pub fn run_and_print(&self, input: &str) -> usize {
-        let answer = self.run(input);
-
-        println!("{}: {}", self.name, answer);
-
-        answer
+        Duration::from_nanos((now.as_nanos() / iterations).try_into().unwrap())
     }
 }
 
 #[macro_export]
 macro_rules! setup_distributed {
     () => {
-        use itertools::Itertools;
-        use linkme::distributed_slice;
-        use rust_aoc_lib::{PartImplementation, PartNum};
-
-        #[distributed_slice]
-        pub static ALL_IMPLEMENTATIONS: [PartImplementation];
-
-        pub fn run_part(part_num: PartNum, input: &str) {
-            ALL_IMPLEMENTATIONS
-                .iter()
-                .sorted_by_key(|p| p.part_num)
-                .filter(|p| p.part_num == part_num)
-                .map(|p| p.run_and_print(input))
-                .reduce(|a, b| {
-                    assert_eq!(a, b);
-                    a
-                });
-        }
-
-        pub fn benchmark_part(part_num: PartNum, input: &str) {
-            ALL_IMPLEMENTATIONS
-                .iter()
-                .sorted_by_key(|p| p.part_num)
-                .filter(|p| p.part_num == part_num)
-                .for_each(|p| p.benchmark(input));
-        }
+        #[linkme::distributed_slice]
+        pub static ALL_IMPLEMENTATIONS: [rust_aoc_lib::PartImplementation];
 
         pub fn do_all(input: &str) {
-            run_part(PartNum::Part1, input);
-            run_part(PartNum::Part2, input);
+            use itertools::Itertools;
+            use rust_aoc_lib::{yansi, PartNum};
 
-            benchmark_part(PartNum::Part1, input);
-            benchmark_part(PartNum::Part2, input);
+            println!("{}", yansi::Paint::new("computing print stats...").dimmed());
+
+            let stats = ALL_IMPLEMENTATIONS
+                .iter()
+                .map(|p| p.get_stats(input))
+                .collect_vec();
+
+            let longest_name = stats.iter().map(|stats| stats.name.len()).max().unwrap();
+
+            let part1 = stats
+                .iter()
+                .filter(|p| p.part_num == PartNum::Part1)
+                .sorted_by_key(|p| p.name)
+                .collect_vec();
+
+            let part2 = stats
+                .iter()
+                .filter(|p| p.part_num == PartNum::Part2)
+                .sorted_by_key(|p| p.name)
+                .collect_vec();
+
+            println!("{}", yansi::Paint::new("Answers: ").dimmed());
+
+            let parts = [part1, part2];
+
+            for part in &parts {
+                for part in part {
+                    println!(
+                        "{:>width$}: {}",
+                        yansi::Paint::new(part.name).bold(),
+                        (part.iteration_stats).result,
+                        width = longest_name,
+                    );
+                }
+            }
+
+            // Assert all answers are the same
+            parts.iter().for_each(|part| {
+                part.iter()
+                    .map(|p| p.iteration_stats.result)
+                    .reduce(|a, b| {
+                        assert_eq!(a, b);
+                        a
+                    });
+            });
+
+            println!("{}", yansi::Paint::new("Benchmarks: ").dimmed());
+
+            for part in &parts {
+                part.iter()
+                    .map(|stats| {
+                        (
+                            stats,
+                            stats
+                                .implementation
+                                .benchmark(input, stats.iteration_stats.iterations),
+                        )
+                    })
+                    .for_each(|(stats, run_time)| {
+                        println!(
+                            "{:>width$}: {:time$} {}",
+                            yansi::Paint::new(stats.name).bold(),
+                            yansi::Color::Cyan.paint(format!("{:?}", run_time)).bold(),
+                            yansi::Paint::new(format!(
+                                "{:iterations$} iterations",
+                                stats.iteration_stats.iterations,
+                                iterations = 10
+                            ))
+                            .dimmed(),
+                            width = longest_name,
+                            time = 10, // Dunno if I wanna bother actually calculating this
+                        );
+                    });
+            }
         }
     };
 }
 
 pub use linkme;
 pub use proc_macros::*;
+pub use yansi;
