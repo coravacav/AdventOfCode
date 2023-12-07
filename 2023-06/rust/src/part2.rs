@@ -45,41 +45,16 @@ fn brute_force(input: &str) -> usize {
 
 #[part2]
 fn using_quadratic_formula(input: &str) -> usize {
-    let mut input = input.as_bytes();
+    let mut input = input.as_bytes().split(|&b| b == b'\n').map(|input| {
+        dbg!(unsafe { std::str::from_utf8_unchecked(input) });
+        input
+            .iter()
+            .filter(|b| b.is_ascii_digit())
+            .map(|b| (b - b'0') as usize)
+            .fold(0usize, |acc, new| acc * 10 + new) as f64
+    });
 
-    let time = {
-        let mut val = 0;
-
-        while let [c, rest @ ..] = input {
-            match c {
-                c @ b'0'..=b'9' => {
-                    val = val * 10 + (c - b'0') as usize;
-                }
-                b'\n' => break,
-                _ => {}
-            }
-
-            input = rest;
-        }
-
-        val as f64
-    };
-
-    let distance = {
-        let mut val = 0;
-
-        while let [c, rest @ ..] = input {
-            if let c @ b'0'..=b'9' = c {
-                val = val * 10 + (c - b'0') as usize;
-            }
-
-            input = rest;
-        }
-
-        val as f64
-    };
-
-    let (first, last) = quadratic_formula(time, distance);
+    let (first, last) = quadratic_formula(input.next().unwrap(), input.next().unwrap());
 
     last - first + 1
 }
