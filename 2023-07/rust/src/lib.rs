@@ -1,5 +1,6 @@
 pub mod part1;
 pub mod part2;
+pub mod shared_impls;
 pub mod speedy_part1;
 pub mod speedy_part2;
 
