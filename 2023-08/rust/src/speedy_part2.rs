@@ -1,7 +1,6 @@
 use std::sync::OnceLock;
 
 use itertools::Itertools;
-use rayon::prelude::*;
 use rust_aoc_lib::{init, part2};
 
 use crate::Instruction;
