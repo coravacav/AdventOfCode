@@ -278,6 +278,7 @@ version = "0.1.0"
 dependencies = [
  "itertools",
  "linkme",
+ "rayon",
  "rust-aoc-lib",
 ]
 
