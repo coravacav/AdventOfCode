@@ -44,7 +44,7 @@ impl PartImplementation {
         let start = std::time::Instant::now();
         let result = self.run(std::hint::black_box(input));
 
-        let iterations = Duration::from_secs(2).as_nanos() / start.elapsed().as_nanos();
+        let iterations = Duration::from_secs(5).as_nanos() / start.elapsed().as_nanos();
 
         let multiple_of_ten_below = 10u128.pow((iterations as f64).log10().floor() as u32 - 1);
 
