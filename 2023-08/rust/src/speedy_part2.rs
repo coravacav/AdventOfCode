@@ -109,6 +109,7 @@ pub fn speedy_part2(input: &str) -> usize {
     }
 
     let mut allowed_steps = steps.iter().cycle();
+    let k = steps.len();
 
     get_starting_locations()
         .iter()
@@ -128,20 +129,8 @@ pub fn speedy_part2(input: &str) -> usize {
                 };
             }
 
-            steps
+            steps / k
         })
-        .reduce(lcm)
-        .unwrap()
-}
-
-fn gcd(a: usize, b: usize) -> usize {
-    if b == 0 {
-        a
-    } else {
-        gcd(b, a % b)
-    }
-}
-
-fn lcm(a: usize, b: usize) -> usize {
-    (a * b) / gcd(a, b)
+        .product::<usize>()
+        * k
 }
