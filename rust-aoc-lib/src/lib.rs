@@ -20,6 +20,16 @@ pub struct Stats<'a> {
     pub implementation: &'a PartImplementation,
 }
 
+pub struct InitImplementation {
+    pub fn_ptr: fn(),
+}
+
+impl InitImplementation {
+    pub const fn new(fn_ptr: fn()) -> Self {
+        Self { fn_ptr }
+    }
+}
+
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct PartImplementation {
     pub part_num: PartNum,
@@ -85,6 +95,13 @@ macro_rules! setup_distributed {
     () => {
         #[linkme::distributed_slice]
         pub static ALL_IMPLEMENTATIONS: [rust_aoc_lib::PartImplementation];
+
+        #[linkme::distributed_slice]
+        pub static ALL_INITS: [rust_aoc_lib::InitImplementation];
+
+        pub fn do_init() {
+            ALL_INITS.iter().for_each(|init| (init.fn_ptr)());
+        }
 
         pub fn do_all(input: &str) {
             use itertools::Itertools;

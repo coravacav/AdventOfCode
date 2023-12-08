@@ -57,3 +57,23 @@ pub fn part2(_: TokenStream, input: TokenStream) -> TokenStream {
 
     expanded.into()
 }
+
+#[proc_macro_attribute]
+pub fn init(_: TokenStream, input: TokenStream) -> TokenStream {
+    let input_fn = parse_macro_input!(input as ItemFn);
+
+    // Extract the function name
+    let fn_name = &input_fn.sig.ident;
+    let static_impl_name = format_ident!("{}_static", &input_fn.sig.ident);
+
+    // Generate new code
+    let expanded = quote! {
+        #input_fn
+
+        #[allow(non_upper_case_globals)]
+        #[rust_aoc_lib::linkme::distributed_slice(crate::ALL_INITS)]
+        static #static_impl_name: rust_aoc_lib::InitImplementation = rust_aoc_lib::InitImplementation::new(#fn_name);
+    };
+
+    expanded.into()
+}

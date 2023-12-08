@@ -1,11 +1,11 @@
-use std::collections::BTreeMap;
+use std::sync::OnceLock;
 
 use itertools::Itertools;
-use rust_aoc_lib::part2;
+use rust_aoc_lib::{init, part2};
 
 use crate::Instruction;
 
-fn convert_byte_to_index(c: u8) -> u8 {
+const fn convert_byte_to_index(c: u8) -> u8 {
     match c {
         b'A' => 0,
         b'B' => 1,
@@ -47,6 +47,23 @@ fn convert_byte_to_index(c: u8) -> u8 {
     }
 }
 
+/// Rust doesn't let me const this, otherwise I would!
+fn get_starting_locations() -> &'static Vec<u16> {
+    static STARTING_LOCATIONS: OnceLock<&'static Vec<u16>> = OnceLock::new();
+    STARTING_LOCATIONS.get_or_init(|| {
+        Box::leak(Box::new(
+            (0..35 * 35 * 35)
+                .filter(|&i| i % 35 == convert_byte_to_index(b'A') as u16)
+                .collect_vec(),
+        ))
+    })
+}
+
+#[init]
+fn init() {
+    get_starting_locations();
+}
+
 #[part2]
 pub fn speedy_part2(input: &str) -> usize {
     let mut steps = Vec::new();
@@ -65,25 +82,25 @@ pub fn speedy_part2(input: &str) -> usize {
     input.next(); // Skip the extra newline
 
     while input.peek().is_some() {
-        let start = convert_byte_to_index(*input.next().unwrap()) as u32 * 35 * 35
-            + convert_byte_to_index(*input.next().unwrap()) as u32 * 35
-            + convert_byte_to_index(*input.next().unwrap()) as u32;
+        let start = convert_byte_to_index(*input.next().unwrap()) as u16 * 35 * 35
+            + convert_byte_to_index(*input.next().unwrap()) as u16 * 35
+            + convert_byte_to_index(*input.next().unwrap()) as u16;
 
         input.next(); // ' '
         input.next(); // '='
         input.next(); // ' '
         input.next(); // '('
 
-        let left = convert_byte_to_index(*input.next().unwrap()) as u32 * 35 * 35
-            + convert_byte_to_index(*input.next().unwrap()) as u32 * 35
-            + convert_byte_to_index(*input.next().unwrap()) as u32;
+        let left = convert_byte_to_index(*input.next().unwrap()) as u16 * 35 * 35
+            + convert_byte_to_index(*input.next().unwrap()) as u16 * 35
+            + convert_byte_to_index(*input.next().unwrap()) as u16;
 
         input.next(); // ','
         input.next(); // ' '
 
-        let right = convert_byte_to_index(*input.next().unwrap()) as u32 * 35 * 35
-            + convert_byte_to_index(*input.next().unwrap()) as u32 * 35
-            + convert_byte_to_index(*input.next().unwrap()) as u32;
+        let right = convert_byte_to_index(*input.next().unwrap()) as u16 * 35 * 35
+            + convert_byte_to_index(*input.next().unwrap()) as u16 * 35
+            + convert_byte_to_index(*input.next().unwrap()) as u16;
 
         input.next(); // ')'
         input.next(); // '\n'
@@ -93,18 +110,14 @@ pub fn speedy_part2(input: &str) -> usize {
 
     let mut allowed_steps = steps.iter().cycle();
 
-    let current = (0u32..35 * 35 * 35)
-        .filter(|&key| !matches!(map.get(key as usize), Some((0, 0))))
-        .filter(|&key| key % 35 == convert_byte_to_index(b'A') as u32)
-        .collect_vec();
-
-    current
+    get_starting_locations()
         .iter()
+        .filter(|&&i| map[i as usize] != (0, 0))
         .map(|&key| {
             let mut steps = 0;
             let mut current = key;
 
-            while current % 35 != convert_byte_to_index(b'Z') as u32 {
+            while current % 35 != convert_byte_to_index(b'Z') as u16 {
                 let (left, right) = map[current as usize];
 
                 steps += 1;
