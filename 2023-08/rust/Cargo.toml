@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 itertools = "0.12.0"
 linkme = "0.3.18"
+rayon = "1.8.0"
 rust-aoc-lib = { path = "../../rust-aoc-lib" }

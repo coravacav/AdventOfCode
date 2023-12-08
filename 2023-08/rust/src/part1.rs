@@ -2,10 +2,7 @@ use std::collections::HashMap;
 
 use rust_aoc_lib::part1;
 
-enum Instruction {
-    Left,
-    Right,
-}
+use crate::Instruction;
 
 #[part1]
 pub fn part1(input: &str) -> usize {
