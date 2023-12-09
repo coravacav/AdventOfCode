@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use rust_aoc_lib::part2;
 
-// #[part2]
+#[part2]
 pub fn part2(input: &str) -> isize {
     input
         .lines()
@@ -34,14 +34,4 @@ pub fn part2(input: &str) -> isize {
             start
         })
         .sum()
-}
-
-#[test]
-fn part2_test() {
-    let test = std::fs::read_to_string("test.txt")
-        .unwrap_or_else(|_| std::fs::read_to_string("part2.test.txt").unwrap());
-    assert_eq!(
-        part2(&test),
-        include_str!("../part2.ans.txt").parse::<isize>().unwrap()
-    );
 }
