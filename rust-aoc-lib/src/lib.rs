@@ -10,7 +10,7 @@ pub enum PartNum {
 
 pub struct IterationStats {
     pub iterations: u128,
-    pub result: usize,
+    pub result: RetType,
 }
 
 pub struct Stats<'a> {
@@ -30,15 +30,40 @@ impl InitImplementation {
     }
 }
 
+#[allow(non_camel_case_types)]
+#[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
+pub enum RetType {
+    usize(usize),
+    isize(isize),
+}
+
+impl std::fmt::Display for RetType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RetType::usize(x) => write!(f, "{}", x),
+            RetType::isize(x) => write!(f, "{}", x),
+        }
+    }
+}
+
+impl std::fmt::Debug for RetType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RetType::usize(x) => write!(f, "{}", x),
+            RetType::isize(x) => write!(f, "{}", x),
+        }
+    }
+}
+
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct PartImplementation {
     pub part_num: PartNum,
     pub name: &'static str,
-    pub fn_ptr: fn(&str) -> usize,
+    pub fn_ptr: fn(&str) -> RetType,
 }
 
 impl PartImplementation {
-    pub const fn new(part_num: PartNum, name: &'static str, fn_ptr: fn(&str) -> usize) -> Self {
+    pub const fn new(part_num: PartNum, name: &'static str, fn_ptr: fn(&str) -> RetType) -> Self {
         Self {
             part_num,
             name,
@@ -46,7 +71,7 @@ impl PartImplementation {
         }
     }
 
-    fn run(&self, input: &str) -> usize {
+    fn run(&self, input: &str) -> RetType {
         (self.fn_ptr)(input)
     }
 
@@ -92,6 +117,7 @@ impl PartImplementation {
 
 #[macro_export]
 macro_rules! setup_distributed {
+    // Want to be able to define multiple "all implementations"
     () => {
         #[linkme::distributed_slice]
         pub static ALL_IMPLEMENTATIONS: [rust_aoc_lib::PartImplementation];
