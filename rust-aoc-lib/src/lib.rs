@@ -2,12 +2,6 @@ pub mod macros;
 pub use macros::*;
 use std::time::Duration;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum PartNum {
-    Part1,
-    Part2,
-}
-
 pub struct IterationStats {
     pub iterations: u128,
     pub result: RetType,
@@ -15,7 +9,7 @@ pub struct IterationStats {
 
 pub struct Stats<'a> {
     pub name: &'a str,
-    pub part_num: PartNum,
+    pub part_num: usize,
     pub iteration_stats: IterationStats,
     pub implementation: &'a PartImplementation,
 }
@@ -57,13 +51,13 @@ impl std::fmt::Debug for RetType {
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct PartImplementation {
-    pub part_num: PartNum,
+    pub part_num: usize,
     pub name: &'static str,
     pub fn_ptr: fn(&str) -> RetType,
 }
 
 impl PartImplementation {
-    pub const fn new(part_num: PartNum, name: &'static str, fn_ptr: fn(&str) -> RetType) -> Self {
+    pub const fn new(part_num: usize, name: &'static str, fn_ptr: fn(&str) -> RetType) -> Self {
         Self {
             part_num,
             name,
@@ -131,7 +125,7 @@ macro_rules! setup_distributed {
 
         pub fn do_all(input: &str) {
             use itertools::Itertools;
-            use rust_aoc_lib::{yansi, PartNum};
+            use rust_aoc_lib::yansi;
 
             println!("{}", yansi::Paint::new("computing print stats...").dimmed());
 
@@ -144,13 +138,13 @@ macro_rules! setup_distributed {
 
             let part1 = stats
                 .iter()
-                .filter(|p| p.part_num == PartNum::Part1)
+                .filter(|p| p.part_num == 1)
                 .sorted_by_key(|p| p.name)
                 .collect_vec();
 
             let part2 = stats
                 .iter()
-                .filter(|p| p.part_num == PartNum::Part2)
+                .filter(|p| p.part_num == 2)
                 .sorted_by_key(|p| p.name)
                 .collect_vec();
 
