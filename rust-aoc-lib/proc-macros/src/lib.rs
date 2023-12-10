@@ -6,6 +6,18 @@ use syn::{parse_macro_input, ItemFn};
 
 fn part_impl(part: usize, input_fn: ItemFn) -> TokenStream {
     let fn_name = &input_fn.sig.ident;
+    // This should parse #[input(test = false)] and #[input(test = true)]
+    let test = input_fn
+        .attrs
+        .iter()
+        .find(|attr| attr.path().is_ident("input"))
+        .map(|attr| {
+            attr.parse_args::<syn::Meta>()
+                .unwrap()
+                .path()
+                .is_ident("test")
+        })
+        .unwrap_or(true);
     let wrapped_fn_name = format_ident!("{}_wrapped", &input_fn.sig.ident);
     let test_fn_name = format_ident!("{}_test", &input_fn.sig.ident);
     let static_impl_name = format_ident!("{}_static", &input_fn.sig.ident);
@@ -29,6 +41,18 @@ fn part_impl(part: usize, input_fn: ItemFn) -> TokenStream {
         _ => panic!("Unsupported part number"),
     };
 
+    let test = if test {
+        quote! {
+            #[test]
+            fn #test_fn_name () {
+                let test = std::fs::read_to_string("test.txt").unwrap_or_else(|_| std::fs::read_to_string(concat!(#test_file_name, ".test.txt")).unwrap());
+                assert_eq!(#fn_name(&test), include_str!(concat!("../", #test_file_name, ".ans.txt")).parse::<#fn_type>().unwrap());
+            }
+        }
+    } else {
+        quote! {}
+    };
+
     // Generate new code
     let expanded = quote! {
         #input_fn
@@ -41,11 +65,7 @@ fn part_impl(part: usize, input_fn: ItemFn) -> TokenStream {
         #[rust_aoc_lib::linkme::distributed_slice(crate::ALL_IMPLEMENTATIONS)]
         static #static_impl_name: rust_aoc_lib::PartImplementation = rust_aoc_lib::PartImplementation::new(#part, stringify!(#fn_name), #wrapped_fn_name);
 
-        #[test]
-        fn #test_fn_name () {
-            let test = std::fs::read_to_string("test.txt").unwrap_or_else(|_| std::fs::read_to_string(concat!(#test_file_name, ".test.txt")).unwrap());
-            assert_eq!(#fn_name(&test), include_str!(concat!("../", #test_file_name, ".ans.txt")).parse::<#fn_type>().unwrap());
-        }
+        #test
     };
 
     expanded.into()

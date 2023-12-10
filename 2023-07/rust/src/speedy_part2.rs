@@ -61,7 +61,7 @@ impl From<&[u8]> for Hand {
     }
 }
 
-#[part2]
+#[part2(test = false)]
 pub fn speedy_part2(input: &str) -> usize {
     let input = input.as_bytes();
     let mut cards_and_bids_ranked = [(Hand(0), 0); 1000];
