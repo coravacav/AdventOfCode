@@ -25,22 +25,13 @@ impl InitImplementation {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
+#[derive(Ord, Debug, PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub enum RetType {
     usize(usize),
     isize(isize),
 }
 
 impl std::fmt::Display for RetType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            RetType::usize(x) => write!(f, "{}", x),
-            RetType::isize(x) => write!(f, "{}", x),
-        }
-    }
-}
-
-impl std::fmt::Debug for RetType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RetType::usize(x) => write!(f, "{}", x),
@@ -152,21 +143,18 @@ macro_rules! setup_distributed {
 
             let parts = [part1, part2];
 
-            for part in &parts {
-                for part in part {
-                    println!(
-                        "{:>width$}: {}",
-                        yansi::Paint::new(part.name).bold(),
-                        (part.iteration_stats).result,
-                        width = longest_name,
-                    );
-                }
-            }
-
-            // Assert all answers are the same
             parts.iter().for_each(|part| {
                 part.iter()
-                    .map(|p| p.iteration_stats.result)
+                    .map(|part| {
+                        println!(
+                            "{:>width$}: {}",
+                            yansi::Paint::new(part.name).bold(),
+                            (part.iteration_stats).result,
+                            width = longest_name,
+                        );
+
+                        part.iteration_stats.result
+                    })
                     .reduce(|a, b| {
                         assert_eq!(a, b);
                         a

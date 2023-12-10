@@ -1,8 +1,8 @@
 use itertools::Itertools;
-use rust_aoc_lib::part2;
+use rust_aoc_lib::{part1, part2};
 
-#[part2]
-pub fn speedy_part1(input: &str) -> isize {
+#[part1]
+pub fn speedy_part1(input: &str) -> usize {
     input
         .lines()
         .map(|line| {
@@ -22,7 +22,7 @@ pub fn speedy_part1(input: &str) -> isize {
             .rev()
             .skip(1)
             .map(|x| x.last().unwrap())
-            .sum::<isize>()
+            .sum::<isize>() as usize
         })
         .sum()
 }

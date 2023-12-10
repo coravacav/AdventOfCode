@@ -1,4 +1,4 @@
-use rust_aoc_lib::{incr_num, part1, read_number, read_till};
+use rust_aoc_lib::{incr_num, part1, read_till, read_usize};
 
 const MAX_RED: usize = 12;
 const MAX_GREEN: usize = 13;
@@ -50,7 +50,7 @@ fn speedy_part_1(input: &str) -> usize {
 
         read_till!(iter, b' ');
 
-        let game_num = read_number!(iter);
+        let game_num = read_usize!(iter);
 
         for &c in iter.by_ref() {
             match c {
