@@ -11,6 +11,8 @@ enum TileType {
     Ground,
     Start,
 }
+use Direction::*;
+use TileType::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct Tile {
@@ -21,7 +23,7 @@ struct Tile {
 
 impl Tile {
     fn new(tile_type: TileType, coords: Coord) -> Self {
-        if tile_type == TileType::Start {
+        if tile_type == Start {
             Tile {
                 tile_type,
                 is_part_of_path: true,
@@ -39,52 +41,33 @@ impl Tile {
 
 impl TileType {
     fn is_horizontal(&self) -> bool {
-        !matches!(
-            self,
-            TileType::Vertical | TileType::Ground | TileType::Start
-        )
+        !matches!(self, Vertical | Ground | Start)
     }
 
     fn is_vertical(&self) -> bool {
-        !matches!(
-            self,
-            TileType::Horizontal | TileType::Ground | TileType::Start
-        )
+        !matches!(self, Horizontal | Ground | Start)
     }
 
-    pub fn get_next_direction(&self, incoming_direction: &Direction) -> Direction {
+    pub fn get_next_direction(&self, traveling_direction: &Direction) -> Direction {
+        macro_rules! handle {
+            ($traveling_direction:ident, $($from:ident => $to:ident),+) => {
+                match traveling_direction {
+                    $(
+                        $from => $to,
+                    )+
+                    e => panic!("Invalid direction {e:?} for {self:?}"),
+                }
+            };
+        }
+
         match self {
-            TileType::Vertical => match incoming_direction {
-                Direction::N => Direction::N,
-                Direction::S => Direction::S,
-                e => panic!("Invalid direction {e:?} for {self:?}"),
-            },
-            TileType::Horizontal => match incoming_direction {
-                Direction::E => Direction::E,
-                Direction::W => Direction::W,
-                e => panic!("Invalid direction {e:?} for {self:?}"),
-            },
-            TileType::NorthToWest => match incoming_direction {
-                Direction::S => Direction::W,
-                Direction::E => Direction::N,
-                e => panic!("Invalid direction {e:?} for {self:?}"),
-            },
-            TileType::NorthToEast => match incoming_direction {
-                Direction::S => Direction::E,
-                Direction::W => Direction::N,
-                e => panic!("Invalid direction {e:?} for {self:?}"),
-            },
-            TileType::SouthToWest => match incoming_direction {
-                Direction::N => Direction::W,
-                Direction::E => Direction::S,
-                e => panic!("Invalid direction {e:?} for {self:?}"),
-            },
-            TileType::SouthToEast => match incoming_direction {
-                Direction::N => Direction::E,
-                Direction::W => Direction::S,
-                e => panic!("Invalid direction {e:?} for {self:?}"),
-            },
-            t => panic!("Invalid tile {t:?}"),
+            Vertical => handle!(traveling_direction, N => N, S => S),
+            Horizontal => handle!(traveling_direction, E => E, W => W),
+            NorthToWest => handle!(traveling_direction, S => W, E => N),
+            NorthToEast => handle!(traveling_direction, S => E, W => N),
+            SouthToWest => handle!(traveling_direction, N => W, E => S),
+            SouthToEast => handle!(traveling_direction, N => E, W => S),
+            _ => *traveling_direction,
         }
     }
 }
@@ -111,21 +94,21 @@ impl std::fmt::Display for Coord {
 }
 
 impl Coord {
-    pub fn take_direction(&self, direction: &Direction) -> Self {
+    pub fn move_direction(&self, direction: &Direction) -> Self {
         match direction {
-            Direction::N => Coord {
+            N => Coord {
                 ns: self.ns.saturating_sub(1),
                 we: self.we,
             },
-            Direction::E => Coord {
+            E => Coord {
                 ns: self.ns,
                 we: self.we + 1,
             },
-            Direction::S => Coord {
+            S => Coord {
                 ns: self.ns + 1,
                 we: self.we,
             },
-            Direction::W => Coord {
+            W => Coord {
                 ns: self.ns,
                 we: self.we.saturating_sub(1),
             },
@@ -156,14 +139,14 @@ pub fn part2(input: &str) -> usize {
         for (we, c) in line.chars().enumerate() {
             let coords = Coord { ns, we };
             match c {
-                '|' => pipe.push(Tile::new(TileType::Vertical, coords)),
-                '-' => pipe.push(Tile::new(TileType::Horizontal, coords)),
-                'L' => pipe.push(Tile::new(TileType::NorthToEast, coords)),
-                'J' => pipe.push(Tile::new(TileType::NorthToWest, coords)),
-                '7' => pipe.push(Tile::new(TileType::SouthToWest, coords)),
-                'F' => pipe.push(Tile::new(TileType::SouthToEast, coords)),
-                '.' => pipe.push(Tile::new(TileType::Ground, coords)),
-                'S' => pipe.push(Tile::new(TileType::Start, coords)),
+                '|' => pipe.push(Tile::new(Vertical, coords)),
+                '-' => pipe.push(Tile::new(Horizontal, coords)),
+                'L' => pipe.push(Tile::new(NorthToEast, coords)),
+                'J' => pipe.push(Tile::new(NorthToWest, coords)),
+                '7' => pipe.push(Tile::new(SouthToWest, coords)),
+                'F' => pipe.push(Tile::new(SouthToEast, coords)),
+                '.' => pipe.push(Tile::new(Ground, coords)),
+                'S' => pipe.push(Tile::new(Start, coords)),
                 _ => panic!("Unknown character: {}", c),
             }
         }
@@ -174,7 +157,7 @@ pub fn part2(input: &str) -> usize {
     let mut start_coords = Coord { ns: 0, we: 0 };
     'outer: for (x, pipe) in pipes.iter().enumerate() {
         for (y, tile) in pipe.iter().enumerate() {
-            if let TileType::Start = tile.tile_type {
+            if let Start = tile.tile_type {
                 start_coords = Coord { ns: x, we: y };
                 break 'outer;
             }
@@ -184,104 +167,48 @@ pub fn part2(input: &str) -> usize {
     let max_x = pipes.len();
     let max_y = pipes[0].len();
 
-    #[derive(Debug)]
-    struct AllDirections {
-        pub north: TileType,
-        pub east: TileType,
-        pub south: TileType,
-        pub west: TileType,
+    // pipes[start_coords].tile_type =
+    let n = pipes[start_coords.move_direction(&N)].tile_type;
+    let e = pipes[start_coords.move_direction(&E)].tile_type;
+    let s = pipes[start_coords.move_direction(&S)].tile_type;
+    let w = pipes[start_coords.move_direction(&W)].tile_type;
+
+    let mut starting_directions = vec![];
+
+    if let Vertical | SouthToEast | SouthToWest = n {
+        starting_directions.push(N)
+    }
+    if let Horizontal | NorthToWest | SouthToWest = e {
+        starting_directions.push(E)
+    }
+    if let Vertical | NorthToEast | NorthToWest = s {
+        starting_directions.push(S)
+    }
+    if let Horizontal | NorthToEast | SouthToEast = w {
+        starting_directions.push(W)
     }
 
-    // pipes[start_coords].tile_type =
-    let north = pipes[start_coords.take_direction(&Direction::N)].tile_type;
-    let east = pipes[start_coords.take_direction(&Direction::E)].tile_type;
-    let south = pipes[start_coords.take_direction(&Direction::S)].tile_type;
-    let west = pipes[start_coords.take_direction(&Direction::W)].tile_type;
+    assert_eq!(starting_directions.len(), 2);
+    let starting_directions = [starting_directions[0], starting_directions[1]];
 
-    // Figure out what tile Start actually is (it's guaranteed to be one)
-    let starting_directions: [Direction; 2] = match (AllDirections {
-        north,
-        east,
-        south,
-        west,
-    }) {
-        AllDirections {
-            north: TileType::Vertical,
-            south: TileType::Vertical,
-            ..
-        } => [Direction::N, Direction::S],
-        AllDirections {
-            east: TileType::Horizontal,
-            west: TileType::Horizontal,
-            ..
-        } => [Direction::E, Direction::W],
-        AllDirections {
-            north: TileType::NorthToEast,
-            south: TileType::SouthToWest,
-            ..
-        } => [Direction::N, Direction::E],
-        AllDirections {
-            north: TileType::NorthToWest,
-            south: TileType::SouthToEast,
-            ..
-        } => [Direction::N, Direction::W],
-        AllDirections {
-            north: TileType::SouthToWest,
-            south: TileType::NorthToEast,
-            ..
-        } => [Direction::S, Direction::W],
-        AllDirections {
-            north: TileType::SouthToEast,
-            south: TileType::NorthToWest,
-            ..
-        } => [Direction::S, Direction::E],
-        AllDirections {
-            east: TileType::NorthToWest,
-            south: TileType::Vertical,
-            ..
-        } => [Direction::E, Direction::S],
-        AllDirections {
-            east: TileType::NorthToEast,
-            south: TileType::Vertical,
-            ..
-        } => [Direction::E, Direction::N],
-        AllDirections {
-            east: TileType::SouthToWest,
-            south: TileType::Vertical,
-            ..
-        } => [Direction::W, Direction::S],
-        AllDirections {
-            east: TileType::SouthToEast,
-            south: TileType::Vertical,
-            ..
-        } => [Direction::W, Direction::N],
-        AllDirections {
-            south: TileType::Vertical,
-            west: TileType::SouthToEast,
-            ..
-        } => [Direction::S, Direction::W],
-        AllDirections {
-            east: TileType::Horizontal,
-            south: TileType::Vertical,
-            ..
-        } => [Direction::E, Direction::S],
-        AllDirections {
-            east: TileType::SouthToWest,
-            south: TileType::NorthToWest,
-            ..
-        } => [Direction::E, Direction::S],
-
-        e => panic!("Invalid start tile {e:?}"),
+    pipes[start_coords].tile_type = match starting_directions {
+        [N, E] => NorthToEast,
+        [N, W] => NorthToWest,
+        [S, W] => SouthToWest,
+        [S, E] => SouthToEast,
+        [N, S] => Vertical,
+        [E, W] => Horizontal,
+        _ => panic!("Invalid starting directions: {:?}", starting_directions),
     };
 
     let mut search_coords = [
         (
             starting_directions[0],
-            start_coords.take_direction(&starting_directions[0]),
+            start_coords.move_direction(&starting_directions[0]),
         ),
         (
             starting_directions[1],
-            start_coords.take_direction(&starting_directions[1]),
+            start_coords.move_direction(&starting_directions[1]),
         ),
     ];
 
@@ -293,7 +220,7 @@ pub fn part2(input: &str) -> usize {
         for coords in search_coords.iter_mut() {
             let tile = &pipes[coords.1];
             let new_direction = tile.tile_type.get_next_direction(&coords.0);
-            let new_coord = coords.1.take_direction(&new_direction);
+            let new_coord = coords.1.move_direction(&new_direction);
             pipes[new_coord].is_part_of_path = true;
 
             *coords = (new_direction, new_coord);
@@ -308,7 +235,7 @@ pub fn part2(input: &str) -> usize {
         let mut count = 0;
 
         loop {
-            let new_coord = starting_coords.take_direction(&direction);
+            let new_coord = starting_coords.move_direction(&direction);
 
             if new_coord.ns >= max_x || new_coord.we >= max_y || new_coord == starting_coords {
                 return count % 2 == 1;
@@ -328,10 +255,10 @@ pub fn part2(input: &str) -> usize {
         .flat_map(|pipe| pipe.iter())
         .filter(|tile| !tile.is_part_of_path)
         .map(|tile| tile.coords)
-        .filter(|&coords| search(&pipes, Direction::N, coords, |ty| ty.is_horizontal()))
-        .filter(|&coords| search(&pipes, Direction::S, coords, |ty| ty.is_horizontal()))
-        .filter(|&coords| search(&pipes, Direction::E, coords, |ty| ty.is_vertical()))
-        .filter(|&coords| search(&pipes, Direction::W, coords, |ty| ty.is_vertical()))
+        .filter(|&coords| search(&pipes, N, coords, |ty| ty.is_horizontal()))
+        .filter(|&coords| search(&pipes, S, coords, |ty| ty.is_horizontal()))
+        .filter(|&coords| search(&pipes, E, coords, |ty| ty.is_vertical()))
+        .filter(|&coords| search(&pipes, W, coords, |ty| ty.is_vertical()))
         .inspect(|tile| println!("{:?}", tile))
         .count()
 }
@@ -348,14 +275,14 @@ pub fn part2(input: &str) -> usize {
 //                 file,
 //                 "{}",
 //                 match tile.tile_type {
-//                     TileType::Vertical => '|',
-//                     TileType::Horizontal => '-',
-//                     TileType::NorthToEast => 'L',
-//                     TileType::NorthToWest => 'J',
-//                     TileType::SouthToWest => '7',
-//                     TileType::SouthToEast => 'F',
-//                     TileType::Ground => '.',
-//                     TileType::Start => 'S',
+//                     Vertical => '|',
+//                     Horizontal => '-',
+//                     NorthToEast => 'L',
+//                     NorthToWest => 'J',
+//                     SouthToWest => '7',
+//                     SouthToEast => 'F',
+//                     Ground => '.',
+//                     Start => 'S',
 //                 }
 //             )
 //             .unwrap();
