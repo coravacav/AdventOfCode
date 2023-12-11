@@ -11,8 +11,16 @@ enum TileType {
     Ground,
     Start,
 }
-use Direction::*;
 use TileType::*;
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum Direction {
+    N,
+    E,
+    S,
+    W,
+}
+use Direction::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct Tile {
@@ -40,14 +48,6 @@ impl Tile {
 }
 
 impl TileType {
-    fn is_horizontal(&self) -> bool {
-        !matches!(self, Vertical | Ground | Start)
-    }
-
-    fn is_vertical(&self) -> bool {
-        !matches!(self, Horizontal | Ground | Start)
-    }
-
     pub fn get_next_direction(&self, traveling_direction: &Direction) -> Direction {
         macro_rules! handle {
             ($traveling_direction:ident, $($from:ident => $to:ident),+) => {
@@ -70,14 +70,6 @@ impl TileType {
             _ => *traveling_direction,
         }
     }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum Direction {
-    N,
-    E,
-    S,
-    W,
 }
 
 /// Letters match what direction to add or subtrack to move in that direction
@@ -127,6 +119,34 @@ impl std::ops::Index<Coord> for Vec<Vec<Tile>> {
 impl std::ops::IndexMut<Coord> for Vec<Vec<Tile>> {
     fn index_mut(&mut self, index: Coord) -> &mut Self::Output {
         &mut self[index.ns][index.we]
+    }
+}
+
+fn pretty_print_table(table: &[Vec<Tile>], highlight: Option<Coord>) {
+    for row in table.iter() {
+        for tile in row.iter() {
+            match tile.tile_type {
+                Vertical => print!("║"),
+                Horizontal => print!("═"),
+                NorthToEast => print!("╚"),
+                NorthToWest => print!("╝"),
+                SouthToWest => print!("╗"),
+                SouthToEast => print!("╔"),
+                Ground => match highlight {
+                    Some(t) if t == tile.coords => {
+                        print!(
+                            "{}",
+                            rust_aoc_lib::yansi::Color::Magenta
+                                .paint(".")
+                                .bg(rust_aoc_lib::yansi::Color::Magenta)
+                        )
+                    }
+                    _ => print!("."),
+                },
+                Start => print!("S"),
+            }
+        }
+        println!();
     }
 }
 
@@ -195,7 +215,7 @@ pub fn part2(input: &str) -> usize {
         [N, E] => NorthToEast,
         [N, W] => NorthToWest,
         [S, W] => SouthToWest,
-        [S, E] => SouthToEast,
+        [E, S] => SouthToEast,
         [N, S] => Vertical,
         [E, W] => Horizontal,
         _ => panic!("Invalid starting directions: {:?}", starting_directions),
@@ -255,38 +275,25 @@ pub fn part2(input: &str) -> usize {
         .flat_map(|pipe| pipe.iter())
         .filter(|tile| !tile.is_part_of_path)
         .map(|tile| tile.coords)
-        .filter(|&coords| search(&pipes, N, coords, |ty| ty.is_horizontal()))
-        .filter(|&coords| search(&pipes, S, coords, |ty| ty.is_horizontal()))
-        .filter(|&coords| search(&pipes, E, coords, |ty| ty.is_vertical()))
-        .filter(|&coords| search(&pipes, W, coords, |ty| ty.is_vertical()))
+        .inspect(|coords| pretty_print_table(&pipes, Some(*coords)))
+        .filter(|&coords| {
+            dbg!(search(&pipes, N, coords, |ty| matches!(
+                ty,
+                Horizontal | SouthToEast | SouthToWest
+            ))) || dbg!(search(&pipes, S, coords, |ty| matches!(
+                ty,
+                Horizontal | NorthToEast | NorthToWest
+            )))
+        })
+        .filter(|&coords| {
+            dbg!(search(&pipes, E, coords, |ty| matches!(
+                ty,
+                Vertical | NorthToWest | SouthToWest
+            ))) || dbg!(search(&pipes, W, coords, |ty| matches!(
+                ty,
+                Vertical | NorthToEast | SouthToEast
+            )))
+        })
         .inspect(|tile| println!("{:?}", tile))
         .count()
 }
-
-// write to file out.txt the entire map but the PATH is marked with X
-// let mut file = std::fs::File::create("out.txt").unwrap();
-// for pipe in pipes.iter() {
-//     use std::io::Write;
-//     for tile in pipe.iter() {
-//         if tile.is_part_of_path {
-//             write!(file, "X").unwrap();
-//         } else {
-//             write!(
-//                 file,
-//                 "{}",
-//                 match tile.tile_type {
-//                     Vertical => '|',
-//                     Horizontal => '-',
-//                     NorthToEast => 'L',
-//                     NorthToWest => 'J',
-//                     SouthToWest => '7',
-//                     SouthToEast => 'F',
-//                     Ground => '.',
-//                     Start => 'S',
-//                 }
-//             )
-//             .unwrap();
-//         }
-//     }
-//     writeln!(file,).unwrap();
-// }
