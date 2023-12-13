@@ -4,7 +4,6 @@ use rust_aoc_lib::part1;
 pub fn part1(input: &str) -> usize {
     input
         .split("\n\n")
-        // .inspect(|group| println!("{}!", group))
         .map(|group| {
             let lines = group.lines().collect::<Vec<_>>();
 

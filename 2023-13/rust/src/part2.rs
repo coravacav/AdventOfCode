@@ -1,84 +1,53 @@
 use itertools::Itertools;
 use rust_aoc_lib::part2;
 
+fn compare_lines((line1, line2): (&[u8], &[u8])) -> bool {
+    line1
+        .iter()
+        .rev()
+        .take(line2.len())
+        .zip(line2.iter().take(line1.len()))
+        .all(|(a, b)| a == b)
+}
+
+fn check_symmetry(lines: &[u8], l: usize) -> Option<usize> {
+    (1..l)
+        .filter(|&i| compare_lines(lines[0..l].split_at(i)))
+        .chain((1..l).filter(|&i| compare_lines(lines[l..2 * l].split_at(i))))
+        .find(|&i| {
+            lines
+                .chunks(l)
+                .filter(|line| !compare_lines(line.split_at(i)))
+                .count()
+                == 1
+        })
+}
+
 #[part2]
 pub fn part2(input: &str) -> usize {
     input
         .split("\n\n")
-        // .inspect(|group| println!("{}!", group))
-        .map(|group| {
-            let lines = group.lines().collect::<Vec<_>>();
+        .map(|group| group.as_bytes())
+        .map(|lines| {
+            let starting_len = lines.len();
+            let lines = lines.iter().filter(|&&b| b != b'\n').copied().collect_vec();
+            let ending_len = lines.len();
 
-            // Check for vertical symmetry
+            let m = starting_len - ending_len + 1;
+            let n = lines.len() / m;
 
-            fn compare_lines((line1, line2): (&str, &str)) -> bool {
-                let line2_reversed = line2.chars().rev().collect::<String>();
-                if line1.len() > line2.len() {
-                    line1.ends_with(&line2_reversed)
-                } else {
-                    line2_reversed.ends_with(line1)
-                }
-            }
-
-            let line_zero_possibilities = (1..lines[0].len())
-                .filter(|&i| compare_lines(lines[0].split_at(i)))
-                .collect::<Vec<_>>();
-
-            let line_one_possibilities = (1..lines[1].len())
-                .filter(|&i| compare_lines(lines[1].split_at(i)))
-                .collect::<Vec<_>>();
-
-            let possible_vertical_symmetry = line_zero_possibilities
-                .iter()
-                .chain(line_one_possibilities.iter())
-                .unique()
-                .collect::<Vec<_>>();
-
-            if let Some(&i) = possible_vertical_symmetry.iter().find(|&&i| {
-                lines
-                    .iter()
-                    .filter(|line| !compare_lines(line.split_at(*i)))
-                    .count()
-                    == 1
-            }) {
-                return *i;
+            if let Some(i) = check_symmetry(&lines, n) {
+                return i;
             }
 
             // transpose lines
-            let lines = (0..lines[0].len())
-                .map(|i| {
-                    lines
-                        .iter()
-                        .map(|line| line.chars().nth(i).unwrap())
-                        .collect::<String>()
-                })
+            let lines = (0..n)
+                .flat_map(|i| lines.chunks(n).map(|line| line[i]).collect::<Vec<_>>())
                 .collect::<Vec<_>>();
 
-            let line_zero_possibilities = (1..lines[0].len())
-                .filter(|&i| compare_lines(lines[0].split_at(i)))
-                .collect::<Vec<_>>();
-
-            let line_one_possibilities = (1..lines[1].len())
-                .filter(|&i| compare_lines(lines[1].split_at(i)))
-                .collect::<Vec<_>>();
-
-            let possible_horizontal_symmetry = line_zero_possibilities
-                .iter()
-                .chain(line_one_possibilities.iter())
-                .unique()
-                .collect::<Vec<_>>();
-
-            if let Some(&i) = possible_horizontal_symmetry.iter().find(|&&i| {
-                lines
-                    .iter()
-                    .filter(|line| !compare_lines(line.split_at(*i)))
-                    .count()
-                    == 1
-            }) {
+            if let Some(i) = check_symmetry(&lines, m) {
                 return i * 100;
             }
-
-            println!("{}", group);
 
             panic!("No symmetry found")
         })
