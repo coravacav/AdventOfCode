@@ -1,22 +1,31 @@
-use bit_vec::BitVec;
+use std::collections::HashMap;
+
 use itertools::Itertools;
+use rayon::prelude::*;
 use rust_aoc_lib::part2;
 
-fn parse(row: &str) -> (Vec<char>, Vec<u8>) {
-    let (cell_str, num_str) = row.split_once(' ').unwrap();
+fn parse(row: &&[u8]) -> (Vec<u8>, Vec<u8>) {
+    let mut row = row.split(|c| c == &b' ');
 
-    let numbers = num_str
-        .split(',')
-        .map(|s| s.parse::<u8>().unwrap())
-        .collect_vec();
-
-    (cell_str.chars().collect_vec(), numbers)
+    (
+        row.next().unwrap().to_owned(),
+        std::str::from_utf8(row.next().unwrap())
+            .unwrap()
+            .split(',')
+            .map(|s| s.parse::<u8>().unwrap())
+            .collect_vec(),
+    )
 }
 
-fn generate_all_possibilities(cells: &[char], mut numbers: &[u8], number_of_damaged: u8) -> usize {
-    let Some(cell) = cells.first() else {
-        return 0;
-    };
+fn generate_all_possibilities<'a>(
+    cache: &mut HashMap<(&'a [u8], &'a [u8], u8), usize>,
+    cells: &'a [u8],
+    mut numbers: &'a [u8],
+    mut number_of_damaged: u8,
+) -> usize {
+    if cache.contains_key(&(cells, numbers, number_of_damaged)) {
+        return *cache.get(&(cells, numbers, number_of_damaged)).unwrap();
+    }
 
     if numbers.is_empty() {
         return 0;
@@ -24,31 +33,55 @@ fn generate_all_possibilities(cells: &[char], mut numbers: &[u8], number_of_dama
 
     if Some(&number_of_damaged) == numbers.first() {
         numbers = &numbers[1..];
+        number_of_damaged = u8::MAX;
 
         if numbers.is_empty() {
-            return if cells.contains(&'#') { 0 } else { 1 };
+            return if cells.contains(&b'#') { 0 } else { 1 };
+        }
+    }
+
+    let Some(cell) = cells.first() else {
+        return 0;
+    };
+
+    fn do_damaged<'a>(
+        cache: &mut HashMap<(&'a [u8], &'a [u8], u8), usize>,
+        cells: &'a [u8],
+        numbers: &'a [u8],
+        number_of_damaged: u8,
+    ) -> usize {
+        if number_of_damaged == u8::MAX {
+            0
+        } else {
+            let res =
+                generate_all_possibilities(cache, &cells[1..], numbers, number_of_damaged + 1);
+            cache.insert((&cells[1..], numbers, number_of_damaged + 1), res);
+            res
+        }
+    }
+
+    fn do_operational<'a>(
+        cache: &mut HashMap<(&'a [u8], &'a [u8], u8), usize>,
+        cells: &'a [u8],
+        numbers: &'a [u8],
+        number_of_damaged: u8,
+    ) -> usize {
+        if number_of_damaged > 0 && number_of_damaged != u8::MAX {
+            0
+        } else {
+            let res = generate_all_possibilities(cache, &cells[1..], numbers, 0);
+            cache.insert((&cells[1..], numbers, 0), res);
+            res
         }
     }
 
     match cell {
-        '#' => {
-            if number_of_damaged == u8::MAX {
-                return 0;
-            }
-
-            generate_all_possibilities(&cells[1..], &numbers[1..], number_of_damaged + 1)
+        b'#' => do_damaged(cache, cells, numbers, number_of_damaged),
+        b'?' => {
+            do_operational(cache, cells, numbers, number_of_damaged)
+                + do_damaged(cache, cells, numbers, number_of_damaged)
         }
-        '?' => {
-            generate_all_possibilities(&cells[1..], &numbers[1..], number_of_damaged + 1)
-                + generate_all_possibilities(&cells[1..], &numbers[1..], 0)
-        }
-        '.' => {
-            if number_of_damaged > 0 {
-                return 0;
-            }
-
-            generate_all_possibilities(&cells[1..], &numbers[1..], 0)
-        }
+        b'.' => do_operational(cache, cells, numbers, number_of_damaged),
         _ => unreachable!(),
     }
 }
@@ -56,34 +89,28 @@ fn generate_all_possibilities(cells: &[char], mut numbers: &[u8], number_of_dama
 #[part2]
 pub fn part2(input: &str) -> usize {
     input
-        .lines()
+        .as_bytes()
+        .split(|&b| b == b'\n')
+        .collect_vec()
+        .par_iter()
         .map(parse)
         .map(|(cells, numbers)| {
-            let cells_len = cells.len() * 5;
-            let numbers_len = numbers.len() * 5;
+            let repeat_count = 5;
+            let cells_len = cells.len() * repeat_count + repeat_count - 1;
+            let numbers_len = numbers.len() * repeat_count;
 
             (
-                cells.into_iter().cycle().take(cells_len).collect_vec(),
+                cells
+                    .into_iter()
+                    .chain(vec![b'?'])
+                    .cycle()
+                    .take(cells_len)
+                    .collect_vec(),
                 numbers.into_iter().cycle().take(numbers_len).collect_vec(),
             )
         })
-        .inspect(|(cells, numbers)| {
-            for cell in cells.iter() {
-                print!("{} ", cell);
-            }
-            for (i, num) in numbers.iter().enumerate() {
-                print!("{}", num);
-                if i != numbers.len() - 1 {
-                    print!(",");
-                }
-            }
-            println!();
+        .map(|(cells, numbers)| {
+            generate_all_possibilities(&mut HashMap::new(), &cells, &numbers, 0)
         })
-        .map(|(cells, numbers)| generate_all_possibilities(&cells, &numbers, 0))
-        // .inspect(|n| println!("{}", n))
         .sum()
-}
-
-fn pretty_print_bitvec(a: &BitVec) -> String {
-    a.iter().map(|b| if b { '#' } else { '.' }).collect()
 }
