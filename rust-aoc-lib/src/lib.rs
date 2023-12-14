@@ -69,7 +69,7 @@ impl PartImplementation {
         let multiple_of_ten_below = 10u128.pow((iterations as f64).log10().floor() as u32 - 1);
 
         // round iterations to the nearest multiple of 10 below
-        let iterations = if iterations > 1000 {
+        let iterations = if iterations > 10 {
             iterations - iterations % multiple_of_ten_below + multiple_of_ten_below
         } else {
             multiple_of_ten_below

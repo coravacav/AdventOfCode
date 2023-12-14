@@ -18,13 +18,15 @@ fn parse(row: &&[u8]) -> (Vec<u8>, Vec<u8>) {
 }
 
 fn generate_all_possibilities<'a>(
-    cache: &mut HashMap<(&'a [u8], &'a [u8], u8), usize>,
+    cache: &mut HashMap<(usize, &'a [u8], u8), usize>,
     cells: &'a [u8],
     mut numbers: &'a [u8],
     mut number_of_damaged: u8,
 ) -> usize {
-    if cache.contains_key(&(cells, numbers, number_of_damaged)) {
-        return *cache.get(&(cells, numbers, number_of_damaged)).unwrap();
+    if cache.contains_key(&(cells.len(), numbers, number_of_damaged)) {
+        return *cache
+            .get(&(cells.len(), numbers, number_of_damaged))
+            .unwrap();
     }
 
     if numbers.is_empty() {
@@ -45,7 +47,7 @@ fn generate_all_possibilities<'a>(
     };
 
     fn do_damaged<'a>(
-        cache: &mut HashMap<(&'a [u8], &'a [u8], u8), usize>,
+        cache: &mut HashMap<(usize, &'a [u8], u8), usize>,
         cells: &'a [u8],
         numbers: &'a [u8],
         number_of_damaged: u8,
@@ -55,13 +57,13 @@ fn generate_all_possibilities<'a>(
         } else {
             let res =
                 generate_all_possibilities(cache, &cells[1..], numbers, number_of_damaged + 1);
-            cache.insert((&cells[1..], numbers, number_of_damaged + 1), res);
+            cache.insert((cells.len() - 1, numbers, number_of_damaged + 1), res);
             res
         }
     }
 
     fn do_operational<'a>(
-        cache: &mut HashMap<(&'a [u8], &'a [u8], u8), usize>,
+        cache: &mut HashMap<(usize, &'a [u8], u8), usize>,
         cells: &'a [u8],
         numbers: &'a [u8],
         number_of_damaged: u8,
@@ -70,7 +72,7 @@ fn generate_all_possibilities<'a>(
             0
         } else {
             let res = generate_all_possibilities(cache, &cells[1..], numbers, 0);
-            cache.insert((&cells[1..], numbers, 0), res);
+            cache.insert((cells.len() - 1, numbers, 0), res);
             res
         }
     }
