@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
 use itertools::Itertools;
-use rayon::prelude::*;
 use rust_aoc_lib::part2;
 
-fn parse(row: &&[u8]) -> (Vec<u8>, Vec<u8>) {
+fn parse(row: &[u8]) -> (Vec<u8>, Vec<u8>) {
     let mut row = row.split(|c| c == &b' ');
 
     (
@@ -93,8 +92,6 @@ pub fn part2(input: &str) -> usize {
     input
         .as_bytes()
         .split(|&b| b == b'\n')
-        .collect_vec()
-        .par_iter()
         .map(parse)
         .map(|(cells, numbers)| {
             let repeat_count = 5;

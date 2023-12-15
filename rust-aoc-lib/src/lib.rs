@@ -63,17 +63,21 @@ impl PartImplementation {
     fn get_iterations(&self, input: &str) -> IterationStats {
         let start = std::time::Instant::now();
         let result = self.run(std::hint::black_box(input));
+        let time = start.elapsed();
 
-        let iterations = Duration::from_secs(5).as_nanos() / start.elapsed().as_nanos();
+        if time > Duration::from_secs(5) {
+            return IterationStats {
+                iterations: 1,
+                result,
+            };
+        }
+
+        let iterations = Duration::from_secs(5).as_nanos() / time.as_nanos();
 
         let multiple_of_ten_below = 10u128.pow((iterations as f64).log10().floor() as u32 - 1);
 
         // round iterations to the nearest multiple of 10 below
-        let iterations = if iterations > 10 {
-            iterations - iterations % multiple_of_ten_below + multiple_of_ten_below
-        } else {
-            multiple_of_ten_below
-        };
+        let iterations = iterations - iterations % multiple_of_ten_below + multiple_of_ten_below;
 
         IterationStats { iterations, result }
     }
